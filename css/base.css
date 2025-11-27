@@ -1,12 +1,13 @@
+/* --- css/base.css --- */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
     --bg-deep: #050511;
     --bg-panel: #101021;
     --modal-bg: #1e1e2f;
-    --primary: #8A2BE2;
+    --primary: #8A2BE2; /* Фиолетовый */
     --primary-glow: #b000e6;
-    --accent: #00f2ff;
+    --accent: #00f2ff; /* Голубой неон */
     --text-main: #ffffff;
     --text-gray: #8f92a1;
     --danger: #ff4b6a;
@@ -19,16 +20,29 @@
 }
 
 body {
-    margin: 0; font-family: 'Outfit', sans-serif;
+    margin: 0; 
+    font-family: 'Outfit', sans-serif;
     background-color: var(--bg-deep);
-    background-image: radial-gradient(circle at 0% 0%, rgba(138, 43, 226, 0.15), transparent 40%),
-                      radial-gradient(circle at 100% 100%, rgba(0, 242, 255, 0.1), transparent 40%);
-    color: var(--text-main); height: 100vh; overflow: hidden;
+    background-image: 
+        radial-gradient(circle at 0% 0%, rgba(138, 43, 226, 0.15), transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(0, 242, 255, 0.1), transparent 50%);
+    color: var(--text-main); 
+    height: 100vh; 
+    overflow: hidden;
 }
 
-.app-container { display: flex; height: 100vh; width: 100%; }
+/* Сброс стандартных стилей для кнопок и инпутов */
+button, input, textarea {
+    font-family: inherit;
+}
 
-/* Контекстное меню (общее) */
+.app-container { 
+    display: flex; 
+    height: 100vh; 
+    width: 100%; 
+}
+
+/* Контекстное меню (если используется) */
 .context-menu { display: none; position: absolute; background: #1a1a2e; border: 1px solid var(--glass-border); border-radius: 12px; padding: 6px; z-index: 999; }
 .menu-item { padding: 10px 20px; cursor: pointer; color: #ddd; border-radius: 8px; font-size: 14px; }
 .menu-item:hover { background: var(--primary); color: white; }
