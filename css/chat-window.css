@@ -1,4 +1,4 @@
-/* --- chat-window.css --- */
+/* --- css/chat-window.css --- */
 
 /* --- ОБЩАЯ СТРУКТУРА --- */
 .chat-wrapper {
@@ -45,8 +45,8 @@
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    gap: 2px; /* Маленький отступ между сообщениями внутри группы */
-    scroll-behavior: smooth;
+    justify-content: flex-start; /* ВАЖНО: Прижимаем сообщения к верху */
+    gap: 2px;
 }
 
 /* Кастомный скроллбар */
@@ -56,24 +56,22 @@
 #chat-window::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 
-/* --- СТРОКА СООБЩЕНИЯ (MESSAGE ROW) --- */
+/* --- СТРОКА СООБЩЕНИЯ --- */
 .message-row {
     display: flex;
-    padding: 1px 24px; /* Боковые отступы */
+    padding: 1px 24px;
     position: relative;
     transition: background 0.2s;
+    /* ИСПРАВЛЕНИЕ: Запрещаем растягиваться по высоте */
+    flex: 0 0 auto; 
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.message-row:hover {
-    background: rgba(255, 255, 255, 0.02); /* Подсветка строки */
-}
-.message-row:hover .msg-actions {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
+.message-row:hover { background: rgba(255, 255, 255, 0.02); }
+.message-row:hover .msg-actions { opacity: 1; visibility: visible; transform: translateY(0); }
 
-/* ГРУППИРОВКА: Начало группы (большой отступ сверху) */
+/* Отступ для начала новой группы */
 .message-row.group-start { margin-top: 14px; }
 
 
@@ -82,7 +80,7 @@
     width: 42px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end; /* Аватар всегда внизу */
+    justify-content: flex-end;
     margin-right: 12px;
     flex-shrink: 0;
 }
@@ -94,23 +92,22 @@
     background-position: center;
     background-color: #222;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    display: none; /* Скрыто по умолчанию */
+    display: none;
 }
-
-/* Показываем аватар только у последнего сообщения в группе */
 .message-row.group-end .msg-avatar { display: block; }
 
 
-/* --- КОНТЕНТ (ИМЯ + ПУЗЫРЬ) --- */
+/* --- КОНТЕНТ --- */
 .msg-content-wrapper {
     display: flex;
     flex-direction: column;
     max-width: 65%;
     position: relative;
     min-width: 0;
+    /* ИСПРАВЛЕНИЕ: Прижимаем пузыри влево по умолчанию, чтобы они не растягивались */
+    align-items: flex-start; 
 }
 
-/* Имя отправителя (только в начале группы) */
 .msg-sender-name {
     font-size: 12px;
     font-weight: 700;
@@ -118,7 +115,6 @@
     margin-bottom: 4px;
     margin-left: 2px;
     cursor: pointer;
-    transition: 0.2s;
 }
 .msg-sender-name:hover { color: var(--primary); }
 
@@ -136,7 +132,6 @@
     border: 1px solid transparent;
 }
 
-/* ВРЕМЯ (внутри пузыря) */
 .msg-time-inline {
     float: right;
     font-size: 10px;
@@ -147,41 +142,45 @@
     line-height: 1;
 }
 
-/* --- СТИЛИ ДЛЯ ЧУЖИХ (СЛЕВА) --- */
+/* --- ЧУЖИЕ (СЛЕВА) --- */
 .message-row.left .msg-bubble {
     background: rgba(30, 30, 45, 0.6);
     border-color: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
-    border-radius: 6px 18px 18px 6px; /* Дефолт для середины группы */
+    border-radius: 6px 18px 18px 6px;
 }
-/* Первый слева */
 .message-row.left.group-start .msg-bubble { border-top-left-radius: 18px; }
-/* Последний слева (с хвостиком) */
 .message-row.left.group-end .msg-bubble { border-bottom-left-radius: 4px; }
 
 
-/* --- СТИЛИ ДЛЯ СВОИХ (СПРАВА) --- */
+/* --- СВОИ (СПРАВА) --- */
 .message-row.right {
-    flex-direction: row-reverse; /* Разворот всего ряда */
+    flex-direction: row-reverse;
 }
-.message-row.right .avatar-column { display: none; } /* Свой аватар не нужен */
+.message-row.right .avatar-column { display: none; }
+
+/* ИСПРАВЛЕНИЕ: Прижимаем пузыри вправо */
+.message-row.right .msg-content-wrapper {
+    align-items: flex-end; 
+}
 
 .message-row.right .msg-bubble {
     background: linear-gradient(135deg, var(--primary), #6a11cb);
     color: white;
     box-shadow: 0 4px 15px rgba(138, 43, 226, 0.25);
-    border-radius: 18px 6px 6px 18px; /* Дефолт для середины группы */
+    border-radius: 18px 6px 6px 18px;
+    text-align: left; /* Текст внутри пузыря остается слева направо */
 }
 .message-row.right .msg-time-inline { color: rgba(255,255,255,0.7); }
 
-/* Первый справа */
 .message-row.right.group-start .msg-bubble { border-top-right-radius: 18px; }
-/* Последний справа (с хвостиком) */
 .message-row.right.group-end .msg-bubble { border-bottom-right-radius: 4px; }
 
 
-/* --- ВЛОЖЕННЫЙ ОТВЕТ (REPLY) --- */
+/* --- REPLY --- */
 .reply-attachment {
+    width: 100%; /* На всю ширину пузыря */
+    box-sizing: border-box;
     position: relative;
     background: rgba(0,0,0,0.15);
     padding: 6px 10px;
@@ -189,161 +188,68 @@
     border-radius: 6px;
     border-left: 2px solid var(--accent);
     cursor: pointer;
-    transition: 0.2s;
 }
-.reply-attachment:hover { background: rgba(0,0,0,0.25); }
 .message-row.right .reply-attachment { background: rgba(0,0,0,0.2); border-left-color: rgba(255,255,255,0.8); }
-
 .reply-name { font-weight: 700; font-size: 11px; margin-bottom: 2px; opacity: 0.9; }
-.reply-text { font-size: 12px; opacity: 0.7; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 250px; }
+.reply-text { font-size: 12px; opacity: 0.7; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
 
-/* --- РЕАКЦИИ --- */
-.reactions-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 4px;
-    /* Выравнивание задается инлайном в JS, но тут дефолт */
-}
-
+/* --- REACTION & ACTIONS --- */
+.reactions-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .reaction-pill {
-    background: rgba(20, 20, 35, 0.6);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 12px;
-    padding: 2px 8px;
-    font-size: 11px;
-    cursor: pointer;
-    display: flex; align-items: center; gap: 4px;
-    transition: 0.2s;
-    user-select: none;
+    background: rgba(20, 20, 35, 0.6); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 2px 8px; font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; gap: 4px; user-select: none;
 }
-.reaction-pill:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
-.reaction-pill.active { 
-    background: rgba(138, 43, 226, 0.2); 
-    border-color: var(--primary); 
-    box-shadow: 0 0 8px rgba(138,43,226,0.2);
-}
+.reaction-pill.active { background: rgba(138, 43, 226, 0.2); border-color: var(--primary); }
 
-
-/* --- МЕНЮ ДЕЙСТВИЙ (FLOATING) --- */
 .msg-actions {
-    position: absolute;
-    top: -30px; /* Над сообщением */
-    right: 20px;
-    background: rgba(20, 20, 35, 0.9);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 4px;
-    display: flex;
-    gap: 4px;
-    opacity: 0; visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    z-index: 10;
+    position: absolute; top: -30px; right: 20px;
+    background: rgba(20, 20, 35, 0.9); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 4px;
+    display: flex; gap: 4px; opacity: 0; visibility: hidden;
+    transform: translateY(10px); transition: all 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 10;
 }
-/* Если сообщение мое - меню слева */
 .message-row.right .msg-actions { right: auto; left: 20px; }
-
-.action-btn {
-    width: 32px; height: 32px;
-    display: flex; justify-content: center; align-items: center;
-    cursor: pointer; color: #aaa; border-radius: 8px; font-size: 14px;
-    transition: 0.2s;
-}
-.action-btn:hover { background: rgba(255,255,255,0.1); color: white; transform: scale(1.1); }
-.action-btn.delete:hover { background: rgba(255, 75, 106, 0.2); color: #ff4b6a; }
+.action-btn { width: 32px; height: 32px; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #aaa; border-radius: 8px; font-size: 14px; }
+.action-btn:hover { background: rgba(255,255,255,0.1); color: white; }
 
 
-/* --- ОБЛАСТЬ ВВОДА (INPUT AREA) --- */
+/* --- INPUT AREA --- */
 .input-container {
     padding: 24px;
-    background: linear-gradient(to top, rgba(5,5,17,1) 30%, rgba(5,5,17,0)); /* Градиент "исчезновения" вверх */
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    z-index: 30;
+    background: linear-gradient(to top, rgba(5,5,17,1) 30%, rgba(5,5,17,0));
+    display: flex; flex-direction: column; position: relative; z-index: 30;
 }
-
-/* Панель "Вы отвечаете" */
 .reply-bar {
-    display: none; /* JS переключит на flex */
-    align-items: center; justify-content: space-between;
-    background: rgba(30, 30, 45, 0.9);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-bottom: none;
-    padding: 8px 16px;
-    border-radius: 16px 16px 0 0;
-    margin: 0 10px; /* Чуть уже инпута */
-    animation: slideUp 0.2s ease;
+    display: none; align-items: center; justify-content: space-between;
+    background: rgba(30, 30, 45, 0.9); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1); border-bottom: none;
+    padding: 8px 16px; border-radius: 16px 16px 0 0; margin: 0 10px;
 }
-@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
 .reply-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #ccc; }
-.reply-icon { color: var(--accent); font-size: 16px; }
-.close-reply { cursor: pointer; padding: 4px; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
-.close-reply:hover { background: rgba(255,255,255,0.1); color: white; }
+.close-reply { cursor: pointer; padding: 4px; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; }
 
-/* Контейнер поля ввода */
 .input-box {
-    background: rgba(30, 30, 40, 0.7);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 24px; /* Полный круг по краям */
-    padding: 8px 8px 8px 16px;
-    display: flex;
-    align-items: flex-end; /* Кнопки прижаты к низу */
-    gap: 10px;
+    background: rgba(30, 30, 40, 0.7); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 24px;
+    padding: 8px 8px 8px 16px; display: flex; align-items: flex-end; gap: 10px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    transition: 0.3s;
 }
+.input-box.editing { border-color: #ffd700; }
+.reply-bar[style*="flex"] + .input-box { border-top-left-radius: 4px; border-top-right-radius: 4px; margin-top: -1px; }
 
-/* Если открыт реплай - верхние углы прямые, чтобы "прилипнуть" к бару */
-.reply-bar[style*="flex"] + .input-box {
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    margin-top: -1px; /* Склеивание границ */
-}
-
-.input-box.editing { border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
-.input-box:focus-within {
-    border-color: var(--primary);
-    background: rgba(40, 40, 55, 0.9);
-    box-shadow: 0 0 20px rgba(138, 43, 226, 0.1);
-}
-
-/* TEXTAREA */
 textarea#msg-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 15px;
-    font-family: 'Outfit', sans-serif;
-    resize: none;
-    padding: 12px 0;
-    max-height: 150px; /* Максимальная высота перед скроллом */
-    min-height: 24px;
-    line-height: 1.5;
-    outline: none;
-    scrollbar-width: none; /* Firefox */
+    flex: 1; background: transparent; border: none; color: white;
+    font-size: 15px; font-family: 'Outfit', sans-serif; resize: none;
+    padding: 12px 0; max-height: 150px; min-height: 24px; line-height: 1.5; outline: none;
+    scrollbar-width: none;
 }
-textarea#msg-input::-webkit-scrollbar { display: none; } /* Chrome */
-textarea#msg-input::placeholder { color: rgba(255,255,255,0.3); }
+textarea#msg-input::-webkit-scrollbar { display: none; }
 
-/* Кнопка отправки */
 #send-btn {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, var(--primary), #b000e6);
-    border: none; border-radius: 50%;
-    color: white; cursor: pointer;
-    display: flex; justify-content: center; align-items: center;
-    transition: 0.2s;
-    box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+    width: 44px; height: 44px; background: linear-gradient(135deg, var(--primary), #b000e6);
+    border: none; border-radius: 50%; color: white; cursor: pointer;
+    display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
     flex-shrink: 0;
 }
-#send-btn:hover { transform: scale(1.05) rotate(5deg); box-shadow: 0 6px 16px rgba(138, 43, 226, 0.6); }
-#send-btn:active { transform: scale(0.95); }
