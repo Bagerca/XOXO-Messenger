@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XOXO Login</title>
+    <style>
+        body {
+            background-color: #ffdde1;
+            background-image: linear-gradient(to right, #ee9ca7, #ffdde1);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 300px;
+            width: 100%;
+        }
+        h1 { color: #ff4b6a; margin-bottom: 20px; }
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #ffdde1;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+        }
+        input:focus { border-color: #ff4b6a; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #ff4b6a;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        button:hover { background: #d63350; }
+        #error-msg { color: red; font-size: 14px; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h1>XOXO 💖</h1>
+        <p>Вход в систему класса</p>
+        <input type="text" id="login" placeholder="Твой логин (например, test)">
+        <input type="password" id="password" placeholder="Секретный код">
+        <button id="btn-login">Войти</button>
+        <div id="error-msg">Ошибка входа</div>
+    </div>
+
+    <!-- ТВОЙ КОД FIREBASE -->
+    <script type="module">
+        // 1. Импортируем Firebase и Аутентификацию
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+
+        // 2. Твои настройки (Я их уже вставил)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhg4-QY-bWcmi55Y9BKAVV9c9T5cWCZOY",
+            authDomain: "xoxo-messenger.firebaseapp.com",
+            projectId: "xoxo-messenger",
+            storageBucket: "xoxo-messenger.firebasestorage.app",
+            messagingSenderId: "931225503438",
+            appId: "1:931225503438:web:a7ec6c5e79cab24578f29f"
+        };
+
+        // 3. Запуск
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // 4. Логика кнопки "Войти"
+        const loginBtn = document.getElementById('btn-login');
+        const errorMsg = document.getElementById('error-msg');
+
+        loginBtn.addEventListener('click', () => {
+            const loginInput = document.getElementById('login').value.trim();
+            const passwordInput = document.getElementById('password').value;
+
+            // Хитрость: мы сами добавляем домен, чтобы дети писали только логин
+            const email = loginInput + "@xoxo.class"; 
+
+            signInWithEmailAndPassword(auth, email, passwordInput)
+                .then((userCredential) => {
+                    // Если всё ок
+                    console.log("Успешный вход:", userCredential.user);
+                    window.location.href = "chat.html"; // Переход в чат
+                })
+                .catch((error) => {
+                    // Если ошибка
+                    console.error(error.code);
+                    errorMsg.style.display = 'block';
+                    if(error.code === 'auth/invalid-credential') {
+                        errorMsg.innerText = "Неверный логин или пароль 💔";
+                    } else {
+                        errorMsg.innerText = "Ошибка: " + error.code;
+                    }
+                });
+        });
+    </script>
+</body>
+</html>index.html
