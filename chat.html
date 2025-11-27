@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XOXO Messenger</title>
-    <!-- Иконка вкладки -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <!-- Шрифт -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <!-- Стили -->
     <link rel="stylesheet" href="chat.css">
 </head>
 <body>
@@ -17,8 +14,6 @@
         
         <!-- ЛЕВАЯ ПАНЕЛЬ -->
         <aside class="sidebar">
-            
-            <!-- НОВЫЙ ЛОГОТИП -->
             <div class="brand">
                 <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -41,44 +36,40 @@
                 </div>
             </div>
             
-            <!-- МЕНЮ НАВИГАЦИИ -->
             <div class="nav-scroll">
                 <div class="nav-category">ГЛАВНОЕ</div>
-                
                 <button class="nav-item active" data-room="general">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     <span>Общий холл</span>
                 </button>
-
                 <button class="nav-item" data-room="love">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                     <span>Признания</span>
                 </button>
-
                 <div class="nav-category">ШКОЛА</div>
-
                 <button class="nav-item" data-room="homework">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                     <span>Домашка</span>
                 </button>
-
                 <button class="nav-item" data-room="flood">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                     <span>Флудилка</span>
                 </button>
             </div>
 
-            <!-- ПРОФИЛЬ -->
+            <!-- ОБНОВЛЕННЫЙ ПРОФИЛЬ В САЙДБАРЕ -->
             <div class="profile-card">
-                <div class="avatar-wrapper">
+                <!-- Аватар с эффектом -->
+                <div class="avatar-wrapper" id="sidebar-avatar-wrap">
                     <div class="avatar" id="my-avatar"></div>
+                    <div class="avatar-sheen"></div> <!-- Блик -->
                     <div class="status-dot"></div>
                 </div>
                 <div class="profile-meta">
                     <div class="username" id="user-display">Загрузка...</div>
-                    <div class="subtext">В сети</div>
+                    <div class="subtext" id="user-status">Нажми для настройки</div>
                 </div>
-                <button id="btn-settings" class="icon-btn">⚙️</button>
+                <button id="btn-settings" class="icon-btn pulse-btn">⚙️</button>
             </div>
         </aside>
 
@@ -108,20 +99,53 @@
         </main>
     </div>
 
-    <!-- Модалки -->
+    <!-- МЕНЮ УДАЛЕНИЯ -->
     <div id="context-menu" class="context-menu">
         <div class="menu-item" id="btn-edit">✏️ Изменить</div>
         <div class="menu-item delete" id="btn-delete">🗑️ Удалить</div>
     </div>
 
+    <!-- ОБНОВЛЕННОЕ ОКНО НАСТРОЕК (ПРОФИЛЬ) -->
     <div id="profile-modal" class="modal-overlay">
-        <div class="modal-window">
-            <h2>Твой образ 🎭</h2>
-            <p>Ссылка на аватарку:</p>
-            <input type="text" id="avatar-input" placeholder="https://...">
-            <div class="modal-buttons">
-                <button id="btn-save-profile">Сохранить</button>
-                <button id="btn-close-modal" class="btn-cancel">Отмена</button>
+        <div class="modal-window profile-window">
+            <div class="modal-header">
+                <h2>Настройки Профиля</h2>
+                <button id="btn-close-modal" class="close-cross">×</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Секция аватара -->
+                <div class="section-title">Твой Аватар</div>
+                <div class="avatar-selection">
+                    <div class="current-avatar-preview" id="preview-avatar"></div>
+                    <div class="avatar-grid" id="avatar-grid">
+                        <!-- Сюда JS добавит картинки -->
+                    </div>
+                </div>
+
+                <!-- Поля ввода -->
+                <div class="form-group">
+                    <label>Твой Никнейм</label>
+                    <input type="text" id="input-nickname" placeholder="Как тебя называть?">
+                </div>
+
+                <div class="form-group">
+                    <label>О себе (Статус)</label>
+                    <input type="text" id="input-bio" placeholder="Напиши что-нибудь крутое...">
+                </div>
+
+                <div class="form-group">
+                    <label>Пол</label>
+                    <div class="gender-selector">
+                        <div class="gender-option" data-value="male">🚹 Парень</div>
+                        <div class="gender-option" data-value="female">🚺 Девушка</div>
+                        <div class="gender-option" data-value="secret">👽 Секрет</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btn-save-profile" class="save-btn">Сохранить изменения</button>
             </div>
         </div>
     </div>
