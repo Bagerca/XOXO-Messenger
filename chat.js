@@ -4,18 +4,17 @@ import {
     collection, addDoc, query, where, orderBy, onSnapshot, 
     doc, deleteDoc, updateDoc, getDoc, setDoc 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-// Подключаем наш 3D рендер
 import { AvatarRenderer } from './js/avatar-renderer.js';
 
-// ПЕРЕМЕННЫЕ
 let currentUser = null;
 let currentRoom = "general";
 let unsubscribeMessages = null;
 let contextMenuMsgId = null;
-let avatarRenderer = null;
 
-// --- СПИСОК ТВОИХ АВАТАРОК ---
-// Важно: Пути должны быть точными. Если папка avatars лежит рядом с index.html
+// Два рендера: один для сайдбара, другой для превью в настройках
+let sidebarRenderer = null;
+let previewRenderer = null;
+
 const myLocalAvatars = [
     "avatars/Ari LoL.png",
     "avatars/Lead_Horizon_Katana.jpg",
@@ -23,13 +22,12 @@ const myLocalAvatars = [
     "avatars/kiriki.jpg"
 ];
 
-// Данные профиля (По умолчанию берем первую картинку из твоего списка)
 let userProfile = {
     avatar: myLocalAvatars[0], 
     nickname: "",
     bio: "В сети",
-    frame: "",
-    effect: "liquid"
+    effect: "liquid",
+    status: "online" // online, busy, offline
 };
 
 // 1. ВХОД
@@ -40,169 +38,171 @@ onAuthStateChanged(auth, async (user) => {
         const userSnap = await getDoc(userDocRef);
 
         if (userSnap.exists()) {
-            const data = userSnap.data();
-            userProfile = { ...userProfile, ...data };
+            userProfile = { ...userProfile, ...userSnap.data() };
         } else {
             const namePart = user.email.split('@')[0];
             userProfile.nickname = namePart.charAt(0).toUpperCase() + namePart.slice(1);
             await setDoc(userDocRef, { ...userProfile, email: user.email });
         }
 
-        // Инициализируем WebGL аватар
-        if (!avatarRenderer) {
-            // Проверяем, существует ли контейнер перед созданием
-            if(document.getElementById('webgl-avatar-container')) {
-                avatarRenderer = new AvatarRenderer(
-                    'webgl-avatar-container', 
-                    userProfile.avatar, 
-                    userProfile.effect || 'liquid'
-                );
-            }
+        // Рендер сайдбара
+        if (!sidebarRenderer && document.getElementById('webgl-avatar-container')) {
+            sidebarRenderer = new AvatarRenderer(
+                'webgl-avatar-container', 
+                userProfile.avatar, 
+                userProfile.effect
+            );
         }
 
         updateSidebarUI();
         loadMessages(currentRoom);
-        initAvatarGrid(); // Загружаем твои картинки в настройки
+        initAvatarGrid();
     } else {
         window.location.href = "index.html";
     }
 });
 
-// Обновление сайдбара
 function updateSidebarUI() {
     const nameEl = document.getElementById('user-display');
     const statusEl = document.getElementById('user-status');
+    const dotEl = document.getElementById('sidebar-status-dot');
 
-    // Обновляем WebGL
-    if(avatarRenderer) {
-        avatarRenderer.updateImage(userProfile.avatar);
-        avatarRenderer.setEffect(userProfile.effect);
+    if(sidebarRenderer) {
+        sidebarRenderer.updateImage(userProfile.avatar);
+        sidebarRenderer.setEffect(userProfile.effect);
     }
-    // На случай, если WebGL не загрузился, можно обновлять и обычный фон (если он есть)
-    // const avatarEl = document.getElementById('my-avatar');
-    // if(avatarEl) avatarEl.style.backgroundImage = `url('${userProfile.avatar}')`;
-
+    
     nameEl.innerText = userProfile.nickname || "Без имени";
     statusEl.innerText = userProfile.bio;
+    
+    // Цвет точки
+    dotEl.dataset.status = userProfile.status;
 }
 
 // 2. ОКНО НАСТРОЕК
 const modal = document.getElementById('profile-modal');
-const closeBtn = document.getElementById('btn-close-modal');
 const settingsBtn = document.getElementById('btn-settings');
-const saveBtn = document.getElementById('btn-save-profile');
 const sidebarAvatar = document.getElementById('sidebar-avatar-wrap');
-const previewAvatar = document.getElementById('preview-avatar');
 
-let tempFrame = "";
-let tempEffect = "";
+let tempProfile = { ...userProfile };
 
 function openSettings() {
     modal.style.display = 'flex';
-    document.getElementById('input-nickname').value = userProfile.nickname;
-    document.getElementById('input-bio').value = userProfile.bio;
-    
-    tempFrame = userProfile.frame;
-    tempEffect = userProfile.effect || 'liquid';
-    
-    updatePreview();
-    
-    // Выделяем активные кнопки
-    selectFeature('effect-selector', tempEffect);
-    // selectFeature('frame-selector', tempFrame); // Если вернешь рамки
-    
-    // Подсветка выбранной аватарки
-    document.querySelectorAll('.avatar-option').forEach(opt => {
-        opt.classList.remove('selected');
-        // Сравниваем URL, но учитываем кодировку пробелов (Ari%20LoL vs Ari LoL)
-        if(decodeURI(opt.dataset.url) === decodeURI(userProfile.avatar)) {
-            opt.classList.add('selected');
-        }
-    });
-}
+    tempProfile = { ...userProfile }; // Копия для редактирования
 
-function updatePreview() {
-    // В превью показываем просто картинку (без тяжелого WebGL, чтобы не лагало)
-    previewAvatar.style.backgroundImage = `url('${userProfile.avatar}')`;
-    previewAvatar.className = `current-avatar-preview avatar ${tempFrame}`;
-}
+    // Заполняем поля
+    document.getElementById('input-nickname').value = tempProfile.nickname;
+    document.getElementById('input-bio').value = tempProfile.bio;
+    document.getElementById('preview-nickname').innerText = tempProfile.nickname || "Никнейм";
 
-function selectFeature(containerId, activeVal) {
-    const container = document.getElementById(containerId);
-    if(container) {
-        container.querySelectorAll('.feature-opt').forEach(opt => {
-            opt.classList.toggle('selected', opt.dataset.val === activeVal);
-        });
+    // Активируем кнопки
+    updateStatusButtons(tempProfile.status);
+    updateEffectButtons(tempProfile.effect);
+    updateAvatarSelection(tempProfile.avatar);
+
+    // Инициализируем или обновляем ПРЕВЬЮ рендер
+    if (!previewRenderer && document.getElementById('preview-avatar-container')) {
+        previewRenderer = new AvatarRenderer(
+            'preview-avatar-container',
+            tempProfile.avatar,
+            tempProfile.effect
+        );
+    } else if (previewRenderer) {
+        previewRenderer.updateImage(tempProfile.avatar);
+        previewRenderer.setEffect(tempProfile.effect);
     }
+    
+    // Точка превью
+    document.getElementById('preview-status-dot').style.background = getStatusColor(tempProfile.status);
 }
 
-// Слушатель кликов по эффектам
-const effectSelector = document.getElementById('effect-selector');
-if(effectSelector) {
-    effectSelector.addEventListener('click', (e) => {
-        if(e.target.classList.contains('feature-opt')) {
-            tempEffect = e.target.dataset.val;
-            selectFeature('effect-selector', tempEffect);
-            // Можно сразу показать в основном меню для вау-эффекта
-            if(avatarRenderer) avatarRenderer.setEffect(tempEffect);
-        }
+function getStatusColor(status) {
+    if(status === 'busy') return 'var(--status-busy)';
+    if(status === 'offline') return 'var(--status-offline)';
+    return 'var(--status-online)';
+}
+
+// --- ЛОГИКА ИНТЕРФЕЙСА НАСТРОЕК ---
+
+// Статус
+document.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        tempProfile.status = btn.dataset.status;
+        updateStatusButtons(tempProfile.status);
+        document.getElementById('preview-status-dot').style.background = getStatusColor(tempProfile.status);
     });
-}
-
-settingsBtn.addEventListener('click', openSettings);
-if(sidebarAvatar) sidebarAvatar.addEventListener('click', openSettings);
-closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
-
-// СОХРАНЕНИЕ
-saveBtn.addEventListener('click', async () => {
-    const newNick = document.getElementById('input-nickname').value.trim();
-    const newBio = document.getElementById('input-bio').value.trim();
-
-    if (newNick) {
-        userProfile.nickname = newNick;
-        userProfile.bio = newBio;
-        userProfile.effect = tempEffect;
-        
-        updateSidebarUI();
-        
-        const userDocRef = doc(db, "users", currentUser.uid);
-        await updateDoc(userDocRef, { 
-            nickname: userProfile.nickname, 
-            bio: userProfile.bio,
-            avatar: userProfile.avatar,
-            effect: userProfile.effect
-        });
-        
-        modal.style.display = 'none';
-    } else {
-        alert("Введи имя!");
-    }
 });
+function updateStatusButtons(active) {
+    document.querySelectorAll('.status-btn').forEach(b => {
+        b.classList.toggle('selected', b.dataset.status === active);
+    });
+}
 
-// --- ГЕНЕРАЦИЯ СЕТКИ ИЗ ТВОИХ ФАЙЛОВ ---
+// Шейдеры
+document.querySelectorAll('.shader-card').forEach(card => {
+    card.addEventListener('click', () => {
+        tempProfile.effect = card.dataset.val;
+        updateEffectButtons(tempProfile.effect);
+        if(previewRenderer) previewRenderer.setEffect(tempProfile.effect);
+    });
+});
+function updateEffectButtons(active) {
+    document.querySelectorAll('.shader-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.val === active);
+    });
+}
+
+// Аватарки
 function initAvatarGrid() {
     const grid = document.getElementById('avatar-grid');
     grid.innerHTML = "";
-    
     myLocalAvatars.forEach(url => {
         const div = document.createElement('div');
         div.className = 'avatar-option';
-        // Кавычки нужны, чтобы пробелы в именах файлов не ломали CSS
         div.style.backgroundImage = `url('${url}')`; 
-        div.dataset.url = url;
-        
         div.addEventListener('click', () => {
-            document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
-            div.classList.add('selected');
-            userProfile.avatar = url;
-            updatePreview();
-            // Сразу обновляем WebGL в сайдбаре, чтобы видно было красоту
-            if(avatarRenderer) avatarRenderer.updateImage(url);
+            tempProfile.avatar = url;
+            updateAvatarSelection(url);
+            if(previewRenderer) previewRenderer.updateImage(url);
         });
-        
         grid.appendChild(div);
     });
 }
+function updateAvatarSelection(activeUrl) {
+    document.querySelectorAll('.avatar-option').forEach(opt => {
+        // Сравнение URL (decodeURI для пробелов)
+        const isMatch = opt.style.backgroundImage.includes(encodeURI(activeUrl)) || opt.style.backgroundImage.includes(activeUrl);
+        opt.classList.toggle('selected', isMatch);
+    });
+}
+
+// Кнопки открытия/закрытия
+settingsBtn.addEventListener('click', openSettings);
+sidebarAvatar.addEventListener('click', openSettings);
+document.getElementById('btn-close-modal').addEventListener('click', () => { modal.style.display = 'none'; });
+
+// СОХРАНЕНИЕ
+document.getElementById('btn-save-profile').addEventListener('click', async () => {
+    const newNick = document.getElementById('input-nickname').value.trim();
+    if (!newNick) return alert("Имя обязательно!");
+
+    tempProfile.nickname = newNick;
+    tempProfile.bio = document.getElementById('input-bio').value.trim();
+
+    // Применяем изменения
+    userProfile = { ...tempProfile };
+    updateSidebarUI();
+
+    // Сохраняем в Firebase
+    await updateDoc(doc(db, "users", currentUser.uid), userProfile);
+    
+    modal.style.display = 'none';
+});
+
+// ВЫХОД
+document.getElementById('btn-logout-settings').addEventListener('click', () => {
+    signOut(auth).then(() => window.location.href = "index.html");
+});
 
 
 // 3. ЧАТ
@@ -220,24 +220,23 @@ function loadMessages(room) {
 
 function renderMessage(docSnap, container) {
     const msg = docSnap.data();
-    const msgId = docSnap.id;
     const isMe = msg.senderEmail === currentUser.email;
 
     const div = document.createElement('div');
     div.className = `message ${isMe ? 'my-message' : 'other-message'}`;
-    if (isMe) div.addEventListener('contextmenu', (e) => openContextMenu(e, msgId));
+    if (isMe) div.addEventListener('contextmenu', (e) => openContextMenu(e, docSnap.id));
 
     const date = new Date(msg.createdAt);
     const time = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
     
-    // Аватарка собеседника (обычная картинка, без WebGL для производительности)
-    const avatarUrl = msg.senderAvatar || myLocalAvatars[0];
-    
-    // Достаем эффекты (если сохраняли рамки)
-    const msgFrame = msg.senderFrame || "";
+    // Получаем цвет статуса собеседника (из сохраненного в сообщении или дефолт)
+    // В идеале статус нужно брать в реальном времени из users, но пока берем сохраненный для простоты
+    let statusColor = 'var(--status-online)'; // fallback
 
     div.innerHTML = `
-        <div class="msg-avatar avatar ${msgFrame}" style="background-image: url('${avatarUrl}')"></div>
+        <div class="msg-avatar" style="background-image: url('${msg.senderAvatar || myLocalAvatars[0]}')">
+             <!-- Можно добавить точку статуса в аватар сообщения, если нужно -->
+        </div>
         <div class="msg-content">
             <div class="msg-header">
                 <span class="msg-sender">${escapeHtml(msg.sender)}</span>
@@ -264,7 +263,8 @@ async function sendMessage() {
             sender: userProfile.nickname,
             senderEmail: currentUser.email,
             senderAvatar: userProfile.avatar,
-            senderEffect: userProfile.effect, 
+            senderEffect: userProfile.effect,
+            senderStatus: userProfile.status, // Сохраняем статус в сообщении
             room: currentRoom,
             createdAt: Date.now()
         });
@@ -274,7 +274,6 @@ async function sendMessage() {
     }
 }
 
-// Утилиты
 function escapeHtml(text) {
     if(!text) return text;
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -306,7 +305,4 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             loadMessages(currentRoom);
         }
     });
-});
-document.getElementById('btn-logout').addEventListener('click', () => {
-    signOut(auth).then(() => window.location.href = "index.html");
 });
