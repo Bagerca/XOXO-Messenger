@@ -1,6 +1,6 @@
-/* --- css/chat-window.css (FIXED VERSION) --- */
+/* --- css/chat-window.css (FINAL FIX) --- */
 
-/* --- ОБЩАЯ СТРУКТУРА --- */
+/* Глобальная структура */
 .chat-wrapper {
     flex: 1;
     display: flex;
@@ -17,28 +17,25 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(16, 16, 33, 0.6);
+    background: rgba(16, 16, 33, 0.8);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     flex-shrink: 0;
-    z-index: 20;
 }
 
-.header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
+.header-left { display: flex; align-items: center; gap: 12px; }
 .room-icon {
     width: 40px; height: 40px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    background: rgba(255,255,255,0.05);
     border-radius: 12px;
     display: flex; justify-content: center; align-items: center;
-    color: var(--text-gray); font-size: 18px;
-    border: 1px solid rgba(255,255,255,0.08);
-    flex-shrink: 0;
+    color: #aaa; border: 1px solid rgba(255,255,255,0.1);
 }
-.room-info h2 { margin: 0; font-size: 16px; font-weight: 700; color: white; }
-.room-desc { font-size: 12px; color: var(--text-gray); }
+.room-info h2 { margin: 0; font-size: 16px; color: white; }
+.room-desc { font-size: 12px; color: #888; }
 
 
-/* --- ОКНО СООБЩЕНИЙ --- */
+/* --- ОКНО ЧАТА --- */
 #chat-window {
     flex: 1;
     padding: 20px 0;
@@ -46,133 +43,102 @@
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    gap: 4px; /* Отступ между разными сообщениями */
+    justify-content: flex-start; /* Прижимаем всё к верху */
+    gap: 6px;
 }
-
-/* Скроллбар */
-#chat-window::-webkit-scrollbar { width: 6px; }
-#chat-window::-webkit-scrollbar-track { background: transparent; }
-#chat-window::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-
 
 /* --- СТРОКА СООБЩЕНИЯ --- */
 .message-row {
     display: flex;
-    padding: 0 24px;
-    position: relative;
-    /* ВАЖНО: Запрещаем строке растягиваться по высоте */
-    flex: 0 0 auto; 
     width: 100%;
+    padding: 0 24px;
     box-sizing: border-box;
-    margin-bottom: 2px;
+    position: relative;
+    
+    /* !!! ГЛАВНЫЕ ИСПРАВЛЕНИЯ !!! */
+    flex: 0 0 auto !important; /* ЗАПРЕТ НА РАСТЯГИВАНИЕ ПО ВЫСОТЕ */
+    height: auto !important;   /* ВЫСОТА ТОЛЬКО ПО КОНТЕНТУ */
+    min-height: 0;
 }
 
 .message-row:hover .msg-actions { opacity: 1; visibility: visible; transform: translateY(0); }
-.message-row.group-start { margin-top: 16px; } /* Отступ перед новой группой */
+.message-row.group-start { margin-top: 16px; }
 
 
-/* --- КОЛОНКА АВАТАРА --- */
+/* --- АВАТАРКА --- */
 .avatar-column {
     width: 42px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end; /* Аватар всегда внизу */
+    justify-content: flex-end;
     margin-right: 12px;
     flex-shrink: 0;
 }
-
 .msg-avatar {
     width: 38px; height: 38px;
     border-radius: 14px;
     background-size: cover;
     background-position: center;
-    background-color: #222;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    background-color: #333;
     display: none;
 }
-/* Аватар только у последнего в группе */
 .message-row.group-end .msg-avatar { display: block; }
 
 
-/* --- ОБЕРТКА КОНТЕНТА (ГЛАВНЫЙ ФИКС) --- */
+/* --- ОБЕРТКА ПУЗЫРЯ --- */
 .msg-content-wrapper {
     display: flex;
     flex-direction: column;
-    max-width: 60%; /* Ограничиваем ширину сообщения */
+    max-width: 65%;
     position: relative;
-    min-width: 0;
-    height: auto;
+    height: auto !important; /* Защита от растягивания */
+}
+.msg-sender-name {
+    font-size: 12px; font-weight: 700; color: #8f92a1;
+    margin-bottom: 4px; margin-left: 2px;
 }
 
-/* --- ПУЗЫРЬ СООБЩЕНИЯ (ГЛАВНЫЙ ФИКС) --- */
+
+/* --- ПУЗЫРЬ С ТЕКСТОМ --- */
 .msg-bubble {
-    padding: 8px 14px;
+    padding: 10px 16px;
     font-size: 15px;
     line-height: 1.5;
     color: #eee;
     word-wrap: break-word;
     white-space: pre-wrap;
     position: relative;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    border: 1px solid transparent;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     
-    /* !!! МАГИЯ ЗДЕСЬ !!! */
-    width: fit-content;  /* Сжимает ширину под текст */
-    height: auto;        /* Сжимает высоту под текст */
-    min-width: 20px;     /* Минимальный размер */
+    /* !!! ГЛАВНЫЕ ИСПРАВЛЕНИЯ !!! */
+    width: fit-content !important; /* Ширина только под текст */
+    height: auto !important;       /* Высота только под текст */
 }
 
 .msg-time-inline {
-    float: right;
-    font-size: 10px;
-    color: rgba(255,255,255,0.5);
-    margin-left: 10px;
-    margin-top: 6px;
-    user-select: none;
-    line-height: 1;
-    vertical-align: bottom;
+    float: right; font-size: 10px; color: rgba(255,255,255,0.5);
+    margin-left: 10px; margin-top: 6px; user-select: none; line-height: 1;
 }
 
-/* --- ЧУЖИЕ СООБЩЕНИЯ (СЛЕВА) --- */
-.message-row.left {
-    justify-content: flex-start;
-}
-
-.message-row.left .msg-content-wrapper {
-    align-items: flex-start; /* Прижимаем пузырь влево */
-}
-
+/* --- СТИЛИ: СЛЕВА (Чужие) --- */
+.message-row.left { justify-content: flex-start; }
+.message-row.left .msg-content-wrapper { align-items: flex-start; }
 .message-row.left .msg-bubble {
-    background: rgba(30, 30, 45, 0.6);
-    border-color: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
+    background: rgba(30, 30, 45, 0.7);
+    border: 1px solid rgba(255,255,255,0.05);
     border-radius: 6px 18px 18px 6px;
 }
 .message-row.left.group-start .msg-bubble { border-top-left-radius: 18px; }
 .message-row.left.group-end .msg-bubble { border-bottom-left-radius: 4px; }
 
-/* Имя отправителя */
-.msg-sender-name {
-    font-size: 12px; font-weight: 700; color: var(--text-gray);
-    margin-bottom: 4px; margin-left: 2px; cursor: pointer;
-}
 
-
-/* --- СВОИ СООБЩЕНИЯ (СПРАВА) --- */
-.message-row.right {
-    flex-direction: row-reverse; /* Разворачиваем весь ряд */
-}
+/* --- СТИЛИ: СПРАВА (Свои) --- */
+.message-row.right { flex-direction: row-reverse; }
 .message-row.right .avatar-column { display: none; }
-
-.message-row.right .msg-content-wrapper {
-    align-items: flex-end; /* !!! ВАЖНО: Прижимаем пузырь вправо !!! */
-}
-
+.message-row.right .msg-content-wrapper { align-items: flex-end; }
 .message-row.right .msg-bubble {
-    background: linear-gradient(135deg, var(--primary), #6a11cb);
+    background: linear-gradient(135deg, #8A2BE2, #6a11cb);
     color: white;
-    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.25);
     border-radius: 18px 6px 6px 18px;
     text-align: left;
 }
@@ -180,71 +146,51 @@
 .message-row.right.group-end .msg-bubble { border-bottom-right-radius: 4px; }
 
 
-/* --- REPLY & REACTION --- */
+/* --- ВЛОЖЕНИЯ И ДЕЙСТВИЯ --- */
 .reply-attachment {
-    width: 100%; box-sizing: border-box; position: relative;
-    background: rgba(0,0,0,0.15); padding: 6px 10px; margin-bottom: 6px;
-    border-radius: 6px; border-left: 2px solid var(--accent); cursor: pointer;
+    background: rgba(0,0,0,0.2); padding: 6px 10px; margin-bottom: 6px;
+    border-radius: 6px; border-left: 2px solid #00f2ff; cursor: pointer;
+    width: 100%; box-sizing: border-box;
 }
-.message-row.right .reply-attachment { background: rgba(0,0,0,0.2); border-left-color: rgba(255,255,255,0.8); }
-.reply-name { font-weight: 700; font-size: 11px; margin-bottom: 2px; opacity: 0.9; }
+.reply-name { font-weight: bold; font-size: 11px; opacity: 0.9; }
 .reply-text { font-size: 12px; opacity: 0.7; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
-.reactions-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.reaction-pill {
-    background: rgba(20, 20, 35, 0.6); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 12px; padding: 2px 8px; font-size: 11px; cursor: pointer;
-    display: flex; align-items: center; gap: 4px;
-}
-.reaction-pill.active { background: rgba(138, 43, 226, 0.2); border-color: var(--primary); }
-
 .msg-actions {
-    position: absolute; top: -30px; right: 20px;
-    background: rgba(20, 20, 35, 0.9); backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 4px;
-    display: flex; gap: 4px; opacity: 0; visibility: hidden;
-    transform: translateY(10px); transition: all 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 10;
+    position: absolute; top: -35px; right: 20px;
+    background: rgba(20, 20, 35, 0.95); padding: 4px; border-radius: 8px;
+    display: flex; gap: 4px; opacity: 0; visibility: hidden; transition: 0.2s;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 .message-row.right .msg-actions { right: auto; left: 20px; }
-.action-btn { width: 32px; height: 32px; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #aaa; border-radius: 8px; font-size: 14px; }
-.action-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+.action-btn { width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #ccc; }
+.action-btn:hover { color: white; background: rgba(255,255,255,0.1); border-radius: 6px; }
 
+.reactions-row { display: flex; gap: 4px; margin-top: 4px; }
+.reaction-pill { background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 10px; font-size: 11px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 4px; }
+.reaction-pill.active { border-color: #8A2BE2; background: rgba(138,43,226,0.2); }
 
-/* --- INPUT AREA --- */
+/* --- ПОЛЕ ВВОДА --- */
 .input-container {
     padding: 24px;
-    background: linear-gradient(to top, rgba(5,5,17,1) 30%, rgba(5,5,17,0));
-    display: flex; flex-direction: column; position: relative; z-index: 30;
+    background: linear-gradient(to top, rgba(5,5,17,1) 20%, rgba(5,5,17,0));
+    display: flex; flex-direction: column;
 }
-.reply-bar {
-    display: none; align-items: center; justify-content: space-between;
-    background: rgba(30, 30, 45, 0.9); backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.1); border-bottom: none;
-    padding: 8px 16px; border-radius: 16px 16px 0 0; margin: 0 10px;
-}
-.reply-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #ccc; }
-.close-reply { cursor: pointer; padding: 4px; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; }
-
 .input-box {
     background: rgba(30, 30, 40, 0.7); backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,0.1); border-radius: 24px;
-    padding: 8px 8px 8px 16px; display: flex; align-items: flex-end; gap: 10px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    padding: 8px 16px; display: flex; align-items: flex-end; gap: 10px;
 }
-.input-box.editing { border-color: #ffd700; }
-.reply-bar[style*="flex"] + .input-box { border-top-left-radius: 4px; border-top-right-radius: 4px; margin-top: -1px; }
-
 textarea#msg-input {
     flex: 1; background: transparent; border: none; color: white;
-    font-size: 15px; font-family: 'Outfit', sans-serif; resize: none;
-    padding: 12px 0; max-height: 150px; min-height: 24px; line-height: 1.5; outline: none;
-    scrollbar-width: none;
+    font-size: 15px; resize: none; padding: 10px 0; max-height: 120px; outline: none;
 }
-textarea#msg-input::-webkit-scrollbar { display: none; }
-
 #send-btn {
-    width: 44px; height: 44px; background: linear-gradient(135deg, var(--primary), #b000e6);
-    border: none; border-radius: 50%; color: white; cursor: pointer;
-    display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+    width: 40px; height: 40px; border-radius: 50%; border: none;
+    background: linear-gradient(135deg, #8A2BE2, #b000e6); color: white;
+    cursor: pointer; display: flex; justify-content: center; align-items: center;
     flex-shrink: 0;
 }
+/* Reply Bar styles */
+.reply-bar { display: none; background: rgba(30,30,45,0.9); padding: 8px 16px; border-radius: 16px 16px 0 0; justify-content: space-between; align-items: center; margin: 0 10px; font-size: 13px; color: #ccc; border: 1px solid rgba(255,255,255,0.1); border-bottom: none; }
+.reply-bar[style*="flex"] + .input-box { border-top-left-radius: 4px; border-top-right-radius: 4px; }
+.close-reply { cursor: pointer; padding: 5px; }
