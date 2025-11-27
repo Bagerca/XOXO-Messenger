@@ -3,25 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XOXO Dark</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <title>XOXO Messenger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="chat.css">
 </head>
 <body>
 
-    <header>
-        <div class="logo">XOXO</div>
-        <div class="user-info" id="user-display">...</div>
-        <button id="btn-logout">Выход</button>
-    </header>
+    <div class="app-layout">
+        
+        <!-- 1. БОКОВАЯ ПАНЕЛЬ (Слева) -->
+        <aside class="sidebar">
+            <div class="app-logo">XOXO 🖤</div>
+            
+            <div class="channels-list">
+                <div class="channel-group">КОМНАТЫ</div>
+                <!-- Активный чат помечаем классом active -->
+                <div class="channel-item active" data-room="general"># общий-чат</div>
+                <div class="channel-item" data-room="love"># признания 💖</div>
+                <div class="channel-item" data-room="flood"># флудилка</div>
+                <div class="channel-item" data-room="homework"># домашка 📚</div>
+            </div>
 
-    <div id="chat-window">
-        <!-- Сюда скрипт будет добавлять сообщения -->
+            <div class="my-profile">
+                <div class="avatar-circle" id="my-avatar">?</div>
+                <div class="profile-info">
+                    <div class="my-name" id="user-display">Загрузка...</div>
+                    <div class="my-status">Онлайн</div>
+                </div>
+                <button id="btn-settings" title="Настройки">⚙️</button>
+            </div>
+        </aside>
+
+        <!-- 2. ОСНОВНОЕ ОКНО ЧАТА (Справа) -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <div class="header-title">
+                    <span class="hash">#</span> <span id="current-room-name">общий-чат</span>
+                </div>
+                <button id="btn-logout" class="logout-btn">Выйти</button>
+            </header>
+
+            <div id="chat-window">
+                <!-- Сообщения падают сюда -->
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="msg-input" placeholder="Написать сообщение..." autocomplete="off">
+                <button id="send-btn">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </main>
+
     </div>
 
-    <div class="input-area">
-        <input type="text" id="msg-input" placeholder="Написать сообщение..." autocomplete="off">
-        <button id="send-btn">➤</button>
+    <!-- 3. КОНТЕКСТНОЕ МЕНЮ (Скрыто, пока не нажмешь ПКМ) -->
+    <div id="context-menu" class="context-menu">
+        <div class="menu-item" id="btn-edit">✏️ Редактировать</div>
+        <div class="menu-item delete" id="btn-delete">🗑️ Удалить</div>
+    </div>
+
+    <!-- 4. МОДАЛЬНОЕ ОКНО ПРОФИЛЯ (Скрыто) -->
+    <div id="profile-modal" class="modal-overlay">
+        <div class="modal-window">
+            <h2>Мой профиль</h2>
+            <p>Сменить аватарку (ссылка на картинку):</p>
+            <input type="text" id="avatar-input" placeholder="https://...">
+            <div class="modal-buttons">
+                <button id="btn-save-profile">Сохранить</button>
+                <button id="btn-close-modal" class="btn-cancel">Отмена</button>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="chat.js"></script>
