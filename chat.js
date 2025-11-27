@@ -4,20 +4,32 @@ import {
     collection, addDoc, query, where, orderBy, onSnapshot, 
     doc, deleteDoc, updateDoc, getDoc, setDoc 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// Подключаем наш 3D рендер
+import { AvatarRenderer } from './js/avatar-renderer.js';
 
 // ПЕРЕМЕННЫЕ
 let currentUser = null;
 let currentRoom = "general";
 let unsubscribeMessages = null;
 let contextMenuMsgId = null;
+let avatarRenderer = null;
 
-// Данные профиля
+// --- СПИСОК ТВОИХ АВАТАРОК ---
+// Важно: Пути должны быть точными. Если папка avatars лежит рядом с index.html
+const myLocalAvatars = [
+    "avatars/Ari LoL.png",
+    "avatars/Lead_Horizon_Katana.jpg",
+    "avatars/igra_Alice_6439.jpg",
+    "avatars/kiriki.jpg"
+];
+
+// Данные профиля (По умолчанию берем первую картинку из твоего списка)
 let userProfile = {
-    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=new",
+    avatar: myLocalAvatars[0], 
     nickname: "",
     bio: "В сети",
-    frame: "",        // Класс рамки
-    effect: ""        // Класс эффекта
+    frame: "",
+    effect: "liquid"
 };
 
 // 1. ВХОД
@@ -36,9 +48,21 @@ onAuthStateChanged(auth, async (user) => {
             await setDoc(userDocRef, { ...userProfile, email: user.email });
         }
 
+        // Инициализируем WebGL аватар
+        if (!avatarRenderer) {
+            // Проверяем, существует ли контейнер перед созданием
+            if(document.getElementById('webgl-avatar-container')) {
+                avatarRenderer = new AvatarRenderer(
+                    'webgl-avatar-container', 
+                    userProfile.avatar, 
+                    userProfile.effect || 'liquid'
+                );
+            }
+        }
+
         updateSidebarUI();
         loadMessages(currentRoom);
-        initAvatarGrid();
+        initAvatarGrid(); // Загружаем твои картинки в настройки
     } else {
         window.location.href = "index.html";
     }
@@ -46,16 +70,20 @@ onAuthStateChanged(auth, async (user) => {
 
 // Обновление сайдбара
 function updateSidebarUI() {
-    const avatarEl = document.getElementById('my-avatar');
     const nameEl = document.getElementById('user-display');
     const statusEl = document.getElementById('user-status');
 
-    avatarEl.style.backgroundImage = `url('${userProfile.avatar}')`;
+    // Обновляем WebGL
+    if(avatarRenderer) {
+        avatarRenderer.updateImage(userProfile.avatar);
+        avatarRenderer.setEffect(userProfile.effect);
+    }
+    // На случай, если WebGL не загрузился, можно обновлять и обычный фон (если он есть)
+    // const avatarEl = document.getElementById('my-avatar');
+    // if(avatarEl) avatarEl.style.backgroundImage = `url('${userProfile.avatar}')`;
+
     nameEl.innerText = userProfile.nickname || "Без имени";
     statusEl.innerText = userProfile.bio;
-    
-    // Сбрасываем классы и ставим новые (рамка + эффект)
-    avatarEl.className = `avatar ${userProfile.frame} ${userProfile.effect}`;
 }
 
 // 2. ОКНО НАСТРОЕК
@@ -66,7 +94,6 @@ const saveBtn = document.getElementById('btn-save-profile');
 const sidebarAvatar = document.getElementById('sidebar-avatar-wrap');
 const previewAvatar = document.getElementById('preview-avatar');
 
-// Временные переменные для предпросмотра
 let tempFrame = "";
 let tempEffect = "";
 
@@ -76,54 +103,54 @@ function openSettings() {
     document.getElementById('input-bio').value = userProfile.bio;
     
     tempFrame = userProfile.frame;
-    tempEffect = userProfile.effect;
+    tempEffect = userProfile.effect || 'liquid';
     
     updatePreview();
     
-    // Выделяем кнопки
-    selectFeature('frame-selector', tempFrame);
+    // Выделяем активные кнопки
     selectFeature('effect-selector', tempEffect);
+    // selectFeature('frame-selector', tempFrame); // Если вернешь рамки
     
-    // Аватарки
+    // Подсветка выбранной аватарки
     document.querySelectorAll('.avatar-option').forEach(opt => {
         opt.classList.remove('selected');
-        if(opt.dataset.url === userProfile.avatar) opt.classList.add('selected');
+        // Сравниваем URL, но учитываем кодировку пробелов (Ari%20LoL vs Ari LoL)
+        if(decodeURI(opt.dataset.url) === decodeURI(userProfile.avatar)) {
+            opt.classList.add('selected');
+        }
     });
 }
 
 function updatePreview() {
+    // В превью показываем просто картинку (без тяжелого WebGL, чтобы не лагало)
     previewAvatar.style.backgroundImage = `url('${userProfile.avatar}')`;
-    // Применяем классы к превью
-    previewAvatar.className = `current-avatar-preview avatar ${tempFrame} ${tempEffect}`;
+    previewAvatar.className = `current-avatar-preview avatar ${tempFrame}`;
 }
 
-// Утилита для кнопок выбора
 function selectFeature(containerId, activeVal) {
     const container = document.getElementById(containerId);
-    container.querySelectorAll('.feature-opt').forEach(opt => {
-        opt.classList.toggle('selected', opt.dataset.val === activeVal);
+    if(container) {
+        container.querySelectorAll('.feature-opt').forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.val === activeVal);
+        });
+    }
+}
+
+// Слушатель кликов по эффектам
+const effectSelector = document.getElementById('effect-selector');
+if(effectSelector) {
+    effectSelector.addEventListener('click', (e) => {
+        if(e.target.classList.contains('feature-opt')) {
+            tempEffect = e.target.dataset.val;
+            selectFeature('effect-selector', tempEffect);
+            // Можно сразу показать в основном меню для вау-эффекта
+            if(avatarRenderer) avatarRenderer.setEffect(tempEffect);
+        }
     });
 }
 
-// Логика кликов по кнопкам рамок/эффектов
-document.getElementById('frame-selector').addEventListener('click', (e) => {
-    if(e.target.classList.contains('feature-opt')) {
-        tempFrame = e.target.dataset.val;
-        selectFeature('frame-selector', tempFrame);
-        updatePreview();
-    }
-});
-document.getElementById('effect-selector').addEventListener('click', (e) => {
-    if(e.target.classList.contains('feature-opt')) {
-        tempEffect = e.target.dataset.val;
-        selectFeature('effect-selector', tempEffect);
-        updatePreview();
-    }
-});
-
-
 settingsBtn.addEventListener('click', openSettings);
-sidebarAvatar.addEventListener('click', openSettings);
+if(sidebarAvatar) sidebarAvatar.addEventListener('click', openSettings);
 closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
 
 // СОХРАНЕНИЕ
@@ -134,9 +161,7 @@ saveBtn.addEventListener('click', async () => {
     if (newNick) {
         userProfile.nickname = newNick;
         userProfile.bio = newBio;
-        userProfile.frame = tempFrame;
         userProfile.effect = tempEffect;
-        // Аватар обновляется сразу по клику в сетке
         
         updateSidebarUI();
         
@@ -145,7 +170,6 @@ saveBtn.addEventListener('click', async () => {
             nickname: userProfile.nickname, 
             bio: userProfile.bio,
             avatar: userProfile.avatar,
-            frame: userProfile.frame,
             effect: userProfile.effect
         });
         
@@ -155,19 +179,16 @@ saveBtn.addEventListener('click', async () => {
     }
 });
 
+// --- ГЕНЕРАЦИЯ СЕТКИ ИЗ ТВОИХ ФАЙЛОВ ---
 function initAvatarGrid() {
     const grid = document.getElementById('avatar-grid');
     grid.innerHTML = "";
-    const styles = ['adventurer', 'avataaars', 'big-smile', 'bottts', 'fun-emoji', 'lorelei'];
     
-    for (let i = 0; i < 15; i++) {
-        const style = styles[Math.floor(Math.random() * styles.length)];
-        const seed = Math.random().toString(36).substring(7);
-        const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
-        
+    myLocalAvatars.forEach(url => {
         const div = document.createElement('div');
         div.className = 'avatar-option';
-        div.style.backgroundImage = `url('${url}')`;
+        // Кавычки нужны, чтобы пробелы в именах файлов не ломали CSS
+        div.style.backgroundImage = `url('${url}')`; 
         div.dataset.url = url;
         
         div.addEventListener('click', () => {
@@ -175,13 +196,16 @@ function initAvatarGrid() {
             div.classList.add('selected');
             userProfile.avatar = url;
             updatePreview();
+            // Сразу обновляем WebGL в сайдбаре, чтобы видно было красоту
+            if(avatarRenderer) avatarRenderer.updateImage(url);
         });
+        
         grid.appendChild(div);
-    }
+    });
 }
 
 
-// 3. ЧАТ (ОТОБРАЖЕНИЕ СООБЩЕНИЙ С РАМКАМИ)
+// 3. ЧАТ
 function loadMessages(room) {
     const chatWindow = document.getElementById('chat-window');
     if (unsubscribeMessages) unsubscribeMessages();
@@ -206,14 +230,14 @@ function renderMessage(docSnap, container) {
     const date = new Date(msg.createdAt);
     const time = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
     
-    const avatarUrl = msg.senderAvatar || "https://api.dicebear.com/7.x/initials/svg?seed=" + msg.sender;
+    // Аватарка собеседника (обычная картинка, без WebGL для производительности)
+    const avatarUrl = msg.senderAvatar || myLocalAvatars[0];
     
-    // Достаем рамку и эффект из сообщения (если они там есть)
+    // Достаем эффекты (если сохраняли рамки)
     const msgFrame = msg.senderFrame || "";
-    const msgEffect = msg.senderEffect || "";
 
     div.innerHTML = `
-        <div class="msg-avatar avatar ${msgFrame} ${msgEffect}" style="background-image: url('${avatarUrl}')"></div>
+        <div class="msg-avatar avatar ${msgFrame}" style="background-image: url('${avatarUrl}')"></div>
         <div class="msg-content">
             <div class="msg-header">
                 <span class="msg-sender">${escapeHtml(msg.sender)}</span>
@@ -240,11 +264,7 @@ async function sendMessage() {
             sender: userProfile.nickname,
             senderEmail: currentUser.email,
             senderAvatar: userProfile.avatar,
-            
-            // ВАЖНО: Прикрепляем к сообщению текущую рамку и эффект
-            senderFrame: userProfile.frame,
-            senderEffect: userProfile.effect,
-            
+            senderEffect: userProfile.effect, 
             room: currentRoom,
             createdAt: Date.now()
         });
@@ -254,7 +274,7 @@ async function sendMessage() {
     }
 }
 
-// Утилиты остаются теми же...
+// Утилиты
 function escapeHtml(text) {
     if(!text) return text;
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
