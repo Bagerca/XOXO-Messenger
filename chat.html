@@ -1,1 +1,240 @@
-<h1>Привет! Ты успешно зашел в XOXO! ❤️</h1>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XOXO Chat</title>
+    <style>
+        body {
+            background-color: #ffdde1; /* Розовый фон */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Шапка */
+        header {
+            background: #ff4b6a;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .user-info { font-weight: bold; font-size: 18px; }
+        #btn-logout {
+            background: white;
+            color: #ff4b6a;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Окно чата */
+        #chat-window {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto; /* Прокрутка */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Сообщения */
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            position: relative;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Свои сообщения (Справа, темные) */
+        .my-message {
+            align-self: flex-end;
+            background: #ff4b6a;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        /* Чужие сообщения (Слева, белые) */
+        .other-message {
+            align-self: flex-start;
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .sender-name {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 2px;
+            display: block;
+        }
+        .my-message .sender-name { display: none; } /* Свое имя не показываем */
+
+        /* Ввод текста */
+        .input-area {
+            background: white;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #ffdde1;
+        }
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ffdde1;
+            border-radius: 20px;
+            outline: none;
+        }
+        input:focus { border-color: #ff4b6a; }
+        button#send-btn {
+            background: #ff4b6a;
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="user-info" id="user-display">Загрузка...</div>
+        <button id="btn-logout">Выйти</button>
+    </header>
+
+    <div id="chat-window">
+        <!-- Сюда будут падать сообщения -->
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="msg-input" placeholder="Напиши что-нибудь милое..." autocomplete="off">
+        <button id="send-btn">➤</button>
+    </div>
+
+    <script type="module">
+        // Импортируем Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // ТВОИ НАСТРОЙКИ
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhg4-QY-bWcmi55Y9BKAVV9c9T5cWCZOY",
+            authDomain: "xoxo-messenger.firebaseapp.com",
+            projectId: "xoxo-messenger",
+            storageBucket: "xoxo-messenger.firebasestorage.app",
+            messagingSenderId: "931225503438",
+            appId: "1:931225503438:web:a7ec6c5e79cab24578f29f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // 1. ПРОВЕРКА ВХОДА (Если не вошел - выкидываем)
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                // Отрезаем @xoxo.com, чтобы получить имя
+                const cleanName = user.email.split('@')[0];
+                document.getElementById('user-display').innerText = "Привет, " + cleanName + "!";
+                
+                // Запускаем прослушку чата только когда вошли
+                loadMessages();
+            } else {
+                window.location.href = "index.html";
+            }
+        });
+
+        // 2. ВЫХОД ИЗ АККАУНТА
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            signOut(auth).then(() => window.location.href = "index.html");
+        });
+
+        // 3. ОТПРАВКА СООБЩЕНИЯ
+        const sendBtn = document.getElementById('send-btn');
+        const input = document.getElementById('msg-input');
+
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (text === "") return;
+
+            const cleanName = currentUser.email.split('@')[0];
+
+            try {
+                await addDoc(collection(db, "messages"), {
+                    text: text,
+                    sender: cleanName,
+                    senderEmail: currentUser.email,
+                    createdAt: Date.now() // Важно для сортировки
+                });
+                input.value = ""; // Очистить поле
+            } catch (e) {
+                console.error("Ошибка отправки: ", e);
+                alert("Ошибка отправки! Проверь интернет или права доступа.");
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        
+        // Отправка по Enter
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // 4. ЗАГРУЗКА И ОТОБРАЖЕНИЕ СООБЩЕНИЙ (В РЕАЛЬНОМ ВРЕМЕНИ)
+        function loadMessages() {
+            const chatWindow = document.getElementById('chat-window');
+            
+            // Запрос: взять коллекцию "messages", отсортировать по времени
+            const q = query(collection(db, "messages"), orderBy("createdAt"));
+
+            // onSnapshot - это магия, она срабатывает САМА, когда кто-то пишет
+            onSnapshot(q, (snapshot) => {
+                chatWindow.innerHTML = ""; // Очистить чат перед обновлением
+                
+                snapshot.forEach((doc) => {
+                    const msg = doc.data();
+                    const msgDiv = document.createElement('div');
+                    
+                    // Проверяем, кто автор сообщения
+                    const isMe = msg.senderEmail === currentUser.email;
+                    
+                    msgDiv.classList.add('message');
+                    msgDiv.classList.add(isMe ? 'my-message' : 'other-message');
+                    
+                    // Если сообщение чужое, добавляем имя
+                    let content = "";
+                    if (!isMe) {
+                        content += `<span class="sender-name">${msg.sender}</span>`;
+                    }
+                    content += msg.text;
+                    
+                    msgDiv.innerHTML = content;
+                    chatWindow.appendChild(msgDiv);
+                });
+
+                // Автопрокрутка вниз
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            });
+        }
+    </script>
+</body>
+</html>
