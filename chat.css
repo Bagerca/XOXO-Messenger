@@ -1,26 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
     --bg-deep: #050511;
     --bg-panel: #101021;
-    --primary: #8A2BE2; /* Фиолетовый */
+    --primary: #8A2BE2;
     --primary-glow: #b000e6;
-    --accent: #00f2ff; /* Голубой неон для акцентов */
+    --accent: #00f2ff;
     --text-main: #ffffff;
     --text-gray: #8f92a1;
     
     --glass: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.08);
-    --radius-l: 24px;
     --radius-m: 16px;
-    --radius-s: 12px;
 }
 
 body {
     margin: 0;
     font-family: 'Outfit', sans-serif;
     background-color: var(--bg-deep);
-    /* Дорогой темный градиент на фоне */
     background-image: radial-gradient(circle at 0% 0%, rgba(138, 43, 226, 0.15), transparent 40%),
                       radial-gradient(circle at 100% 100%, rgba(0, 242, 255, 0.1), transparent 40%);
     color: var(--text-main);
@@ -28,299 +25,165 @@ body {
     overflow: hidden;
 }
 
-.app-container {
-    display: flex;
-    height: 100vh;
-    width: 100%;
-}
+.app-container { display: flex; height: 100vh; width: 100%; }
 
-/* --- 1. ЛЕВЫЙ САЙДБАР --- */
+/* --- САЙДБАР --- */
 .sidebar {
     width: 280px;
     background: rgba(16, 16, 33, 0.6);
     backdrop-filter: blur(20px);
     border-right: 1px solid var(--glass-border);
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     padding: 24px 16px;
     flex-shrink: 0;
 }
 
+/* ЛОГОТИП */
 .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 40px;
-    padding-left: 10px;
+    display: flex; align-items: center; gap: 15px;
+    margin-bottom: 40px; padding-left: 5px;
 }
-.logo-glow {
-    width: 40px; height: 40px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-glow));
-    border-radius: 12px;
-    display: flex; justify-content: center; align-items: center;
-    font-weight: 800; font-size: 18px;
-    box-shadow: 0 0 20px rgba(138, 43, 226, 0.4);
+.brand-text { display: flex; flex-direction: column; justify-content: center; line-height: 1; }
+.brand-title {
+    font-weight: 800; font-size: 24px;
+    background: linear-gradient(90deg, #fff, #ddd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
-.brand span { font-weight: 700; font-size: 20px; letter-spacing: 0.5px; }
+.brand-subtitle {
+    font-size: 10px; font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 2.5px;
+    margin-top: 4px;
+}
 
+/* МЕНЮ */
 .nav-scroll { flex: 1; overflow-y: auto; }
-
 .nav-category {
-    font-size: 11px;
-    color: var(--text-gray);
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    margin: 20px 0 10px 12px;
-    text-transform: uppercase;
+    font-size: 11px; color: var(--text-gray); font-weight: 700;
+    letter-spacing: 1.5px; margin: 20px 0 10px 12px;
 }
-
 .nav-item {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-m);
-    color: var(--text-gray);
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: 500;
-    font-size: 15px;
-    transition: 0.2s all ease;
-    text-align: left;
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; background: transparent; border: none;
+    border-radius: var(--radius-m); color: var(--text-gray);
+    cursor: pointer; font-family: inherit; font-weight: 500; font-size: 15px;
+    transition: 0.2s;
 }
-.nav-item svg { width: 20px; height: 20px; opacity: 0.7; }
-
-.nav-item:hover {
-    background: var(--glass);
-    color: white;
-}
+.nav-item:hover { background: var(--glass); color: white; }
 .nav-item.active {
     background: linear-gradient(90deg, rgba(138, 43, 226, 0.15), transparent);
-    color: white;
-    border-left: 3px solid var(--primary);
-    border-radius: 4px var(--radius-m) var(--radius-m) 4px; /* Квадратный слева */
+    color: white; border-left: 3px solid var(--primary);
 }
+.nav-item svg { width: 20px; height: 20px; opacity: 0.7; }
 .nav-item.active svg { opacity: 1; stroke: var(--primary); }
-
 
 /* ПРОФИЛЬ */
 .profile-card {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    padding: 12px;
-    border-radius: var(--radius-m);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 20px;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    padding: 12px; border-radius: var(--radius-m);
+    display: flex; align-items: center; gap: 12px; margin-top: 20px;
+}
+.avatar {
+    width: 42px; height: 42px; background: #333; border-radius: 50%;
+    background-size: cover; border: 2px solid rgba(255,255,255,0.1);
 }
 .avatar-wrapper { position: relative; }
-.avatar {
-    width: 42px; height: 42px;
-    background-color: #333;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-    border: 2px solid rgba(255,255,255,0.1);
-}
 .status-dot {
-    position: absolute; bottom: 0; right: 0;
-    width: 10px; height: 10px;
-    background: #00ff88;
-    border: 2px solid var(--bg-panel);
-    border-radius: 50%;
+    position: absolute; bottom: 0; right: 0; width: 10px; height: 10px;
+    background: #00ff88; border: 2px solid var(--bg-panel); border-radius: 50%;
 }
 .profile-meta { flex: 1; overflow: hidden; }
 .username { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .subtext { font-size: 11px; color: var(--text-gray); }
+.icon-btn { background: transparent; border: none; cursor: pointer; color: var(--text-gray); padding: 5px; }
+.icon-btn:hover { color: white; transform: rotate(90deg); transition: 0.3s; }
 
-.icon-btn {
-    background: transparent; border: none; cursor: pointer;
-    color: var(--text-gray); padding: 5px; border-radius: 50%;
-    transition: 0.2s;
-}
-.icon-btn:hover { background: rgba(255,255,255,0.1); color: white; transform: rotate(90deg); }
-
-/* --- 2. ПРАВЫЙ ЧАТ --- */
-.chat-wrapper {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    background: rgba(5, 5, 17, 0.4);
-}
-
+/* --- ЧАТ --- */
+.chat-wrapper { flex: 1; display: flex; flex-direction: column; background: rgba(5, 5, 17, 0.4); }
 .chat-header {
-    height: 72px;
-    padding: 0 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--glass-border);
+    height: 72px; padding: 0 32px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1px solid var(--glass-border);
 }
 .header-left { display: flex; align-items: center; gap: 15px; }
 .room-icon {
-    width: 36px; height: 36px;
-    background: var(--glass);
-    border-radius: 10px;
-    display: flex; justify-content: center; align-items: center;
-    color: var(--text-gray);
-    font-size: 20px;
+    width: 36px; height: 36px; background: var(--glass); border-radius: 10px;
+    display: flex; justify-content: center; align-items: center; color: var(--text-gray);
 }
 .room-info h2 { margin: 0; font-size: 18px; font-weight: 700; }
 .room-desc { font-size: 12px; color: var(--text-gray); }
-
 .btn-outlined {
-    background: transparent;
-    border: 1px solid var(--glass-border);
-    color: var(--text-main);
-    padding: 8px 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 13px;
-    transition: 0.2s;
+    background: transparent; border: 1px solid var(--glass-border); color: var(--text-main);
+    padding: 8px 16px; border-radius: 10px; cursor: pointer;
 }
 .btn-outlined:hover { border-color: #ff4b6a; color: #ff4b6a; }
 
-/* ОКНО ЧАТА */
-#chat-window {
-    flex: 1;
-    padding: 20px 32px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px; /* Больше воздуха между сообщениями */
-}
+#chat-window { flex: 1; padding: 20px 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
 #chat-window::-webkit-scrollbar { width: 6px; }
-#chat-window::-webkit-scrollbar-track { background: transparent; }
 #chat-window::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 
 /* СООБЩЕНИЯ */
-.message {
-    display: flex;
-    gap: 16px;
-    max-width: 700px;
-    animation: slideUp 0.3s ease;
-}
+.message { display: flex; gap: 16px; max-width: 700px; animation: slideUp 0.3s ease; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-.msg-avatar {
-    width: 40px; height: 40px;
-    border-radius: 14px; /* Квадрат с округлением выглядит современнее */
-    flex-shrink: 0;
-}
+.msg-avatar { width: 40px; height: 40px; border-radius: 14px; flex-shrink: 0; }
 .msg-content { display: flex; flex-direction: column; gap: 4px; }
-.msg-header { display: flex; align-items: center; gap: 10px; }
-.msg-sender { font-weight: 700; font-size: 15px; color: white; cursor: pointer; }
+.msg-sender { font-weight: 700; font-size: 15px; cursor: pointer; }
 .msg-sender:hover { color: var(--primary); }
-.msg-time { font-size: 11px; color: rgba(255,255,255,0.3); }
-
+.msg-time { font-size: 11px; color: rgba(255,255,255,0.3); margin-left: 10px; }
 .msg-text {
-    background: var(--glass);
-    padding: 12px 18px;
-    border-radius: 0 16px 16px 16px;
-    font-size: 15px;
-    line-height: 1.6;
-    color: #e0e0e0;
-    border: 1px solid transparent;
+    background: var(--glass); padding: 12px 18px; border-radius: 0 16px 16px 16px;
+    font-size: 15px; line-height: 1.6; color: #e0e0e0;
 }
-
 /* Свои сообщения */
 .my-message { align-self: flex-end; flex-direction: row-reverse; }
 .my-message .msg-content { align-items: flex-end; }
 .my-message .msg-text {
-    background: linear-gradient(135deg, var(--primary), #60259f);
-    color: white;
-    border-radius: 16px 0 16px 16px;
-    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.25);
+    background: linear-gradient(135deg, var(--primary), #60259f); color: white;
+    border-radius: 16px 0 16px 16px; box-shadow: 0 4px 15px rgba(138, 43, 226, 0.25);
 }
 .my-message .msg-header { flex-direction: row-reverse; }
 
-/* ПОЛЕ ВВОДА */
-.input-container {
-    padding: 24px 32px;
-}
+/* ВВОД */
+.input-container { padding: 24px 32px; }
 .input-box {
-    background: rgba(20, 20, 35, 0.8);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    padding: 8px 10px 8px 20px;
-    border-radius: 20px; /* Капсула */
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    transition: 0.3s;
+    background: rgba(20, 20, 35, 0.8); backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border); padding: 8px 10px 8px 20px;
+    border-radius: 20px; display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: 0.3s;
 }
-.input-box:focus-within {
-    border-color: var(--primary);
-    box-shadow: 0 10px 30px rgba(138, 43, 226, 0.15);
-}
-
-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: white;
-    font-family: inherit;
-    font-size: 16px;
-    outline: none;
-}
+.input-box:focus-within { border-color: var(--primary); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.15); }
+input { flex: 1; background: transparent; border: none; color: white; font-size: 16px; outline: none; }
 #send-btn {
-    width: 44px; height: 44px;
-    background: var(--primary);
-    border: none;
-    border-radius: 14px;
-    color: white;
-    cursor: pointer;
-    display: flex; justify-content: center; align-items: center;
-    transition: 0.2s;
+    width: 44px; height: 44px; background: var(--primary); border: none;
+    border-radius: 14px; color: white; cursor: pointer; display: flex; justify-content: center; align-items: center;
 }
-#send-btn:hover { background: var(--primary-glow); transform: scale(1.05); }
 #send-btn svg { width: 20px; }
 
-/* КОНТЕКСТНОЕ МЕНЮ И МОДАЛКА */
+/* КОНТЕКСТ */
 .context-menu {
-    display: none; position: absolute;
-    background: #1a1a2e; border: 1px solid var(--glass-border);
-    border-radius: 12px; padding: 6px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 999;
+    display: none; position: absolute; background: #1a1a2e;
+    border: 1px solid var(--glass-border); border-radius: 12px; padding: 6px; z-index: 999;
 }
-.menu-item {
-    padding: 10px 20px; cursor: pointer; color: #ddd; border-radius: 8px; font-size: 14px;
-}
+.menu-item { padding: 10px 20px; cursor: pointer; color: #ddd; border-radius: 8px; font-size: 14px; }
 .menu-item:hover { background: var(--primary); color: white; }
-.menu-item.delete:hover { background: #ff4b6a; }
-
 .modal-overlay {
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-    z-index: 1000; justify-content: center; align-items: center;
+    background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;
 }
 .modal-window {
     background: #16162a; border: 1px solid var(--glass-border);
     padding: 30px; border-radius: 24px; width: 350px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
-.modal-window h2 { margin-top: 0; color: white; }
 .modal-window input {
-    width: 100%; padding: 12px; background: rgba(0,0,0,0.3);
-    border: 1px solid var(--glass-border); border-radius: 12px;
-    color: white; margin-bottom: 20px;
+    width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+    border-radius: 12px; color: white; margin-bottom: 20px; box-sizing: border-box;
 }
 .modal-buttons { display: flex; gap: 10px; }
-.modal-buttons button { flex: 1; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-weight: 600; }
+.modal-buttons button { flex: 1; padding: 12px; border-radius: 12px; border: none; cursor: pointer; }
 #btn-save-profile { background: var(--primary); color: white; }
 .btn-cancel { background: transparent; border: 1px solid var(--glass-border); color: #aaa; }
 
-/* Адаптив для мобилок */
 @media (max-width: 768px) {
-    .sidebar { display: none; } /* Пока скрываем, позже сделаем кнопку */
-    .chat-header { padding: 0 16px; }
-    #chat-window { padding: 20px 16px; }
-    .input-container { padding: 16px; }
+    .sidebar { display: none; }
+    .chat-header, #chat-window, .input-container { padding-left: 16px; padding-right: 16px; }
 }
