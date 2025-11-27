@@ -5,99 +5,173 @@ import {
     doc, deleteDoc, updateDoc, getDoc, setDoc 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- ПЕРЕМЕННЫЕ ---
+// ПЕРЕМЕННЫЕ
 let currentUser = null;
-let currentRoom = "general"; // Комната по умолчанию
-let unsubscribeMessages = null; // Чтобы отключать прослушку старой комнаты
-let contextMenuMsgId = null; // ID сообщения, на которое нажали ПКМ
-let myAvatar = "https://ui-avatars.com/api/?background=b000e6&color=fff&name=?"; // Заглушка
+let currentRoom = "general";
+let unsubscribeMessages = null;
+let contextMenuMsgId = null;
 
-// --- 1. ПРОВЕРКА ВХОДА И ЗАГРУЗКА ПРОФИЛЯ ---
+// Данные профиля (по умолчанию)
+let userProfile = {
+    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=new",
+    nickname: "",
+    bio: "В сети",
+    gender: "secret"
+};
+
+// --- 1. ВХОД И ЗАГРУЗКА ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         
-        // Получаем имя из email (test@xoxo.com -> Test)
-        const namePart = user.email.split('@')[0];
-        const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-        
-        // Загружаем профиль пользователя из базы (если есть аватарка)
+        // Загружаем данные из базы
         const userDocRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userDocRef);
 
         if (userSnap.exists()) {
             const data = userSnap.data();
-            myAvatar = data.avatar || myAvatar;
+            userProfile = { ...userProfile, ...data }; // Объединяем
         } else {
-            // Если пользователя нет в базе users, создаем его
-            await setDoc(userDocRef, {
-                email: user.email,
-                avatar: myAvatar
-            });
+            // Если новый - создаем запись
+            const namePart = user.email.split('@')[0];
+            userProfile.nickname = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+            await setDoc(userDocRef, { ...userProfile, email: user.email });
         }
 
-        // Обновляем интерфейс слева (Профиль)
-        document.getElementById('user-display').innerText = formattedName;
-        updateMyAvatarUI(myAvatar);
-
-        // Загружаем сообщения первой комнаты
+        updateSidebarUI();
         loadMessages(currentRoom);
+        initAvatarGrid(); // Генерируем картинки для настроек
     } else {
         window.location.href = "index.html";
     }
 });
 
-function updateMyAvatarUI(url) {
+function updateSidebarUI() {
     const avatarEl = document.getElementById('my-avatar');
-    avatarEl.style.backgroundImage = `url('${url}')`;
-    avatarEl.innerText = ""; // Убираем вопросительный знак
+    const nameEl = document.getElementById('user-display');
+    const statusEl = document.getElementById('user-status');
+
+    avatarEl.style.backgroundImage = `url('${userProfile.avatar}')`;
+    nameEl.innerText = userProfile.nickname || "Без имени";
+    statusEl.innerText = userProfile.bio;
 }
 
-// --- 2. ПЕРЕКЛЮЧЕНИЕ КОМНАТ ---
-const channelBtns = document.querySelectorAll('.channel-item');
-const roomTitle = document.getElementById('current-room-name');
+// --- 2. НАСТРОЙКИ ПРОФИЛЯ ---
+const modal = document.getElementById('profile-modal');
+const closeBtn = document.getElementById('btn-close-modal');
+const settingsBtn = document.getElementById('btn-settings');
+const saveBtn = document.getElementById('btn-save-profile');
+const sidebarAvatar = document.getElementById('sidebar-avatar-wrap');
 
-channelBtns.forEach(btn => {
+// Открытие окна
+function openSettings() {
+    modal.style.display = 'flex';
+    
+    // Заполняем поля текущими данными
+    document.getElementById('input-nickname').value = userProfile.nickname;
+    document.getElementById('input-bio').value = userProfile.bio;
+    document.getElementById('preview-avatar').style.backgroundImage = `url('${userProfile.avatar}')`;
+    
+    // Выбор пола
+    document.querySelectorAll('.gender-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.value === userProfile.gender);
+    });
+
+    // Выбор аватара (подсветка текущего если есть в списке)
+    document.querySelectorAll('.avatar-option').forEach(opt => {
+        opt.classList.remove('selected');
+        if(opt.dataset.url === userProfile.avatar) opt.classList.add('selected');
+    });
+}
+
+settingsBtn.addEventListener('click', openSettings);
+sidebarAvatar.addEventListener('click', openSettings); // Клик по аватарке тоже открывает
+
+closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+
+// Выбор пола
+document.querySelectorAll('.gender-option').forEach(btn => {
     btn.addEventListener('click', () => {
-        // Убираем активность у всех
-        channelBtns.forEach(b => b.classList.remove('active'));
-        // Ставим активность нажатой
-        btn.classList.add('active');
-
-        // Меняем комнату
-        const newRoom = btn.getAttribute('data-room');
-        if (newRoom !== currentRoom) {
-            currentRoom = newRoom;
-            roomTitle.innerText = btn.innerText.replace('# ', ''); // Меням заголовок
-            loadMessages(currentRoom); // Перезагружаем чат
-        }
+        document.querySelectorAll('.gender-option').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
     });
 });
 
-// --- 3. ЗАГРУЗКА СООБЩЕНИЙ ---
+// Сохранение
+saveBtn.addEventListener('click', async () => {
+    // Собираем данные
+    const newNick = document.getElementById('input-nickname').value.trim();
+    const newBio = document.getElementById('input-bio').value.trim();
+    const genderEl = document.querySelector('.gender-option.selected');
+    const newGender = genderEl ? genderEl.dataset.value : 'secret';
+    // Аватар берется из выбранного в сетке, либо остается старым
+
+    if (newNick) {
+        userProfile.nickname = newNick;
+        userProfile.bio = newBio;
+        userProfile.gender = newGender;
+        // userProfile.avatar уже обновлен при клике на сетку
+        
+        // Обновляем UI
+        updateSidebarUI();
+        
+        // Сохраняем в базу
+        const userDocRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userDocRef, { 
+            nickname: userProfile.nickname,
+            bio: userProfile.bio,
+            gender: userProfile.gender,
+            avatar: userProfile.avatar
+        });
+        
+        modal.style.display = 'none';
+    } else {
+        alert("Имя не может быть пустым!");
+    }
+});
+
+// Генерация сетки аватарок (DiceBear API)
+function initAvatarGrid() {
+    const grid = document.getElementById('avatar-grid');
+    grid.innerHTML = "";
+    
+    // Стили аватарок
+    const styles = ['adventurer', 'avataaars', 'big-smile', 'bottts', 'fun-emoji', 'lorelei', 'notionists'];
+    
+    for (let i = 0; i < 15; i++) {
+        // Случайный стиль и сид
+        const style = styles[Math.floor(Math.random() * styles.length)];
+        const seed = Math.random().toString(36).substring(7);
+        const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+        
+        const div = document.createElement('div');
+        div.className = 'avatar-option';
+        div.style.backgroundImage = `url('${url}')`;
+        div.dataset.url = url;
+        
+        div.addEventListener('click', () => {
+            document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+            div.classList.add('selected');
+            // Обновляем превью и переменную
+            document.getElementById('preview-avatar').style.backgroundImage = `url('${url}')`;
+            userProfile.avatar = url;
+        });
+        
+        grid.appendChild(div);
+    }
+}
+
+
+// --- 3. ЧАТ И СООБЩЕНИЯ ---
 function loadMessages(room) {
     const chatWindow = document.getElementById('chat-window');
-    
-    // Если уже слушали другую комнату - отключаемся
-    if (unsubscribeMessages) {
-        unsubscribeMessages();
-    }
+    if (unsubscribeMessages) unsubscribeMessages();
 
-    // Запрос: сообщения ТОЛЬКО этой комнаты
-    const q = query(
-        collection(db, "messages"), 
-        where("room", "==", room),
-        orderBy("createdAt")
-    );
+    const q = query(collection(db, "messages"), where("room", "==", room), orderBy("createdAt"));
 
     unsubscribeMessages = onSnapshot(q, (snapshot) => {
-        chatWindow.innerHTML = ""; // Чистим чат
-        
-        snapshot.forEach((docSnap) => {
-            renderMessage(docSnap, chatWindow);
-        });
-
-        // Скролл вниз
+        chatWindow.innerHTML = "";
+        snapshot.forEach((docSnap) => renderMessage(docSnap, chatWindow));
         chatWindow.scrollTop = chatWindow.scrollHeight;
     });
 }
@@ -109,149 +183,91 @@ function renderMessage(docSnap, container) {
 
     const div = document.createElement('div');
     div.className = `message ${isMe ? 'my-message' : 'other-message'}`;
-    
-    // Чтобы работало контекстное меню (ПКМ)
-    if (isMe) {
-        div.addEventListener('contextmenu', (e) => openContextMenu(e, msgId));
-    }
+    if (isMe) div.addEventListener('contextmenu', (e) => openContextMenu(e, msgId));
 
-    // Время
     const date = new Date(msg.createdAt);
     const time = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-
-    // Аватарка отправителя
-    const avatarUrl = msg.senderAvatar || "https://ui-avatars.com/api/?background=444&color=fff&name=" + msg.sender;
+    
+    // Используем аватар из сообщения или заглушку
+    const avatarUrl = msg.senderAvatar || "https://api.dicebear.com/7.x/initials/svg?seed=" + msg.sender;
 
     div.innerHTML = `
-        <div class="msg-avatar" style="background-image: url('${avatarUrl}'); background-size: cover;"></div>
+        <div class="msg-avatar" style="background-image: url('${avatarUrl}')"></div>
         <div class="msg-content">
             <div class="msg-header">
-                <span class="msg-sender">${msg.sender}</span>
+                <span class="msg-sender">${escapeHtml(msg.sender)}</span>
                 <span class="msg-time">${time}</span>
             </div>
             <div class="msg-text">${escapeHtml(msg.text)}</div>
         </div>
     `;
-
     container.appendChild(div);
 }
 
-// Защита от HTML-тегов (чтобы не взломали через сообщения)
-function escapeHtml(text) {
-    if(!text) return text;
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-// --- 4. ОТПРАВКА СООБЩЕНИЯ ---
+// ОТПРАВКА
 const input = document.getElementById('msg-input');
-const sendBtn = document.getElementById('send-btn');
+document.getElementById('send-btn').addEventListener('click', sendMessage);
+input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
 async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
 
-    const namePart = currentUser.email.split('@')[0];
-    const senderName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-
     try {
         await addDoc(collection(db, "messages"), {
             text: text,
-            sender: senderName,
+            sender: userProfile.nickname, // Используем НИКНЕЙМ
             senderEmail: currentUser.email,
-            senderAvatar: myAvatar, // Сохраняем текущую аватарку в сообщение
-            room: currentRoom,      // ВАЖНО: сохраняем комнату
+            senderAvatar: userProfile.avatar, // Текущая аватарка
+            room: currentRoom,
             createdAt: Date.now()
         });
         input.value = "";
-        input.focus();
     } catch (e) {
-        console.error("Ошибка отправки:", e);
-        alert("Не удалось отправить. Проверь консоль.");
+        console.error("Ошибка:", e);
     }
 }
 
-sendBtn.addEventListener('click', sendMessage);
-input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+// Утилиты
+function escapeHtml(text) {
+    if(!text) return text;
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
-
-// --- 5. КОНТЕКСТНОЕ МЕНЮ (УДАЛЕНИЕ) ---
 const contextMenu = document.getElementById('context-menu');
-const deleteBtn = document.getElementById('btn-delete');
-const editBtn = document.getElementById('btn-edit');
-
 function openContextMenu(e, id) {
-    e.preventDefault(); // Блокируем стандартное меню браузера
+    e.preventDefault();
     contextMenuMsgId = id;
-    
-    // Позиция меню
     contextMenu.style.top = `${e.clientY}px`;
     contextMenu.style.left = `${e.clientX}px`;
     contextMenu.style.display = 'block';
 }
+document.addEventListener('click', () => { contextMenu.style.display = 'none'; });
 
-// Закрыть меню при клике в любом месте
-document.addEventListener('click', () => {
-    contextMenu.style.display = 'none';
+document.getElementById('btn-delete').addEventListener('click', async () => {
+    if (contextMenuMsgId && confirm("Удалить?")) await deleteDoc(doc(db, "messages", contextMenuMsgId));
 });
-
-// Удаление
-deleteBtn.addEventListener('click', async () => {
+document.getElementById('btn-edit').addEventListener('click', async () => {
     if (contextMenuMsgId) {
-        if(confirm("Удалить сообщение?")) {
-            await deleteDoc(doc(db, "messages", contextMenuMsgId));
+        const newText = prompt("Новый текст:");
+        if (newText) await updateDoc(doc(db, "messages", contextMenuMsgId), { text: newText });
+    }
+});
+
+// Навигация
+document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const newRoom = btn.dataset.room;
+        if (newRoom !== currentRoom) {
+            currentRoom = newRoom;
+            document.getElementById('current-room-name').innerText = btn.querySelector('span').innerText;
+            loadMessages(currentRoom);
         }
-    }
+    });
 });
 
-// Редактирование (простое)
-editBtn.addEventListener('click', async () => {
-    if (contextMenuMsgId) {
-        const newText = prompt("Введите новый текст:");
-        if (newText) {
-            await updateDoc(doc(db, "messages", contextMenuMsgId), {
-                text: newText
-            });
-        }
-    }
-});
-
-
-// --- 6. ПРОФИЛЬ (СМЕНА АВАТАРКИ) ---
-const settingsBtn = document.getElementById('btn-settings');
-const modal = document.getElementById('profile-modal');
-const closeModalBtn = document.getElementById('btn-close-modal');
-const saveProfileBtn = document.getElementById('btn-save-profile');
-const avatarInput = document.getElementById('avatar-input');
-
-settingsBtn.addEventListener('click', () => {
-    modal.style.display = 'flex'; // Показываем модалку
-    avatarInput.value = myAvatar; // Подставляем текущую
-});
-
-closeModalBtn.addEventListener('click', () => {
-    modal.style.display = 'none';
-});
-
-saveProfileBtn.addEventListener('click', async () => {
-    const newUrl = avatarInput.value.trim();
-    if (newUrl) {
-        myAvatar = newUrl;
-        updateMyAvatarUI(myAvatar);
-        
-        // Сохраняем в базу данных пользователя
-        const userDocRef = doc(db, "users", currentUser.uid);
-        await updateDoc(userDocRef, { avatar: myAvatar });
-        
-        modal.style.display = 'none';
-    }
-});
-
-// --- 7. ВЫХОД ---
 document.getElementById('btn-logout').addEventListener('click', () => {
     signOut(auth).then(() => window.location.href = "index.html");
 });
