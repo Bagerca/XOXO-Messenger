@@ -1,265 +1,231 @@
-/* --- ОСНОВНОЙ ЛЕЙАУТ --- */
-.chat-wrapper {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: rgba(5, 5, 17, 0.6);
-    position: relative;
-    overflow: hidden; /* Убирает горизонтальный скролл */
-    width: 100%;
-}
+/* --- chat-window.css --- */
 
-.chat-header {
-    height: 72px;
-    padding: 0 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(16, 16, 33, 0.4);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--glass-border);
-    flex-shrink: 0;
-}
-.header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
-.room-icon {
-    width: 40px; height: 40px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
-    display: flex; justify-content: center; align-items: center;
-    color: var(--text-gray); font-size: 18px;
-    border: 1px solid var(--glass-border);
-    flex-shrink: 0;
-}
-.room-info { overflow: hidden; }
-.room-info h2 { margin: 0; font-size: 16px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.room-desc { font-size: 12px; color: var(--text-gray); }
-
-/* --- ОКНО СООБЩЕНИЙ --- */
+/* Глобальные настройки для скролла и шрифтов */
 #chat-window {
     flex: 1;
-    padding: 20px;
+    padding: 20px 0; /* Убрали боковые отступы, они будут в сообщениях */
     overflow-y: auto;
-    overflow-x: hidden; /* ВАЖНО: Блокируем горизонталь */
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 2px; /* Маленький отступ между сообщениями одной группы */
+    scroll-behavior: smooth;
 }
 
-/* Кастомный скролл */
-#chat-window::-webkit-scrollbar { width: 6px; }
-#chat-window::-webkit-scrollbar-track { background: transparent; }
-#chat-window::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-
-/* --- СООБЩЕНИЕ (КОНТЕЙНЕР) --- */
-.message {
-    display: flex;
-    align-items: flex-end; /* Аватарка всегда внизу */
-    gap: 10px;
-    max-width: 85%; /* Чтобы не прилипало к краям */
-    position: relative;
-    margin-bottom: 4px;
-}
-
-.message:hover .msg-actions { opacity: 1; visibility: visible; transform: translateY(0); }
-
-/* Аватарка */
-.msg-avatar {
-    width: 36px; height: 36px;
+/* Дата-разделитель (для профессионального вида) */
+.date-divider {
+    align-self: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 12px;
     border-radius: 12px;
+    font-size: 11px;
+    color: var(--text-gray);
+    margin: 20px 0;
+    backdrop-filter: blur(4px);
+}
+
+/* --- КОНТЕЙНЕР СООБЩЕНИЯ --- */
+.message-row {
+    display: flex;
+    padding: 2px 24px; /* Отступы по бокам */
+    position: relative;
+    transition: background 0.2s;
+}
+
+/* Подсветка всей строки при наведении */
+.message-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+.message-row:hover .msg-actions {
+    opacity: 1;
+    transform: translateY(0);
+}
+.message-row:hover .msg-time {
+    opacity: 1;
+}
+
+/* ГРУППИРОВКА: Если сообщение первое в группе - большой отступ сверху */
+.message-row.group-start {
+    margin-top: 14px;
+}
+
+/* --- АВАТАРКИ --- */
+.avatar-column {
+    width: 42px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Аватар внизу группы */
+    margin-right: 12px;
     flex-shrink: 0;
+}
+
+.msg-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 14px; /* Squircle форма (между квадратом и кругом) */
     background-size: cover;
     background-position: center;
-    background-color: #333;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    /* Аватар виден только у последнего сообщения в группе */
+    display: none; 
+}
+.group-end .msg-avatar {
+    display: block; /* Показываем только в конце группы */
 }
 
-/* Контент (Имя + Пузырь + Реакции) */
-.msg-content {
+/* --- КОНТЕНТ --- */
+.msg-content-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    min-width: 0; /* Чтобы текст переносился */
+    max-width: 65%;
     position: relative;
 }
 
-/* Имя и время */
-.msg-header {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    padding-left: 2px;
-    margin-bottom: 2px;
+/* Имя отправителя (только для первой группы) */
+.msg-sender-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-gray);
+    margin-bottom: 4px;
+    margin-left: 2px;
+    cursor: pointer;
 }
-.msg-sender { font-size: 12px; font-weight: 700; color: var(--text-gray); cursor: pointer; }
-.msg-sender:hover { color: var(--primary); }
-.msg-time { font-size: 10px; color: rgba(255,255,255,0.2); }
+.msg-sender-name:hover { color: var(--accent); }
 
-/* --- ПУЗЫРЬ С ТЕКСТОМ --- */
+/* --- ПУЗЫРЬ СООБЩЕНИЯ --- */
 .msg-bubble {
     padding: 10px 14px;
-    border-radius: 16px;
     font-size: 15px;
     line-height: 1.5;
-    color: #e0e0e0;
-    word-wrap: break-word; /* Перенос длинных слов */
-    white-space: pre-wrap; /* Сохранение абзацев */
+    color: #eee;
+    word-wrap: break-word;
+    white-space: pre-wrap;
     position: relative;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-radius: 6px 18px 18px 6px; /* Мягкие углы */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s;
 }
 
-/* --- СТИЛИ ДЛЯ ЧУЖИХ (СЛЕВА) --- */
-.other-message { align-self: flex-start; }
-.other-message .msg-bubble {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--glass-border);
-    border-bottom-left-radius: 4px; /* Хвостик */
+/* Стилизация ЧУЖИХ сообщений */
+.message-row.left .msg-bubble {
+    background: rgba(30, 30, 45, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(10px);
+    border-top-left-radius: 6px;
 }
+/* Первый пузырь в группе имеет скругление */
+.message-row.left.group-start .msg-bubble { border-top-left-radius: 18px; }
+/* Последний пузырь в группе имеет хвостик */
+.message-row.left.group-end .msg-bubble { border-bottom-left-radius: 4px; }
 
-/* --- СТИЛИ ДЛЯ СВОИХ (СПРАВА) --- */
-.my-message {
-    align-self: flex-end;
-    flex-direction: row-reverse; /* Разворачиваем: Аватар справа */
+
+/* Стилизация МОИХ сообщений */
+.message-row.right {
+    flex-direction: row-reverse; /* Разворот */
 }
-.my-message .msg-header { flex-direction: row-reverse; text-align: right; padding-right: 2px; }
-.my-message .msg-content { align-items: flex-end; }
-.my-message .msg-bubble {
-    background: linear-gradient(135deg, var(--primary), #60259f);
+.message-row.right .avatar-column { display: none; /* Своя аватарка не нужна в чате */ }
+
+.message-row.right .msg-bubble {
+    /* Неоновый градиент */
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
     color: white;
-    border-bottom-right-radius: 4px; /* Хвостик */
-    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 15px rgba(37, 117, 252, 0.25);
+    border-radius: 18px 6px 6px 18px;
 }
+.message-row.right.group-start .msg-bubble { border-top-right-radius: 18px; }
+.message-row.right.group-end .msg-bubble { border-bottom-right-radius: 4px; }
 
-/* --- ОТВЕТ (REPLY) ВНУТРИ СООБЩЕНИЯ --- */
-.reply-preview {
+/* --- ВРЕМЯ --- */
+.msg-meta {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: rgba(0, 0, 0, 0.2);
-    border-left: 3px solid rgba(255, 255, 255, 0.5);
-    border-radius: 6px;
-    padding: 6px 10px;
-    margin-bottom: 6px; /* Отступ от текста */
-    font-size: 12px;
-    cursor: pointer;
-    user-select: none;
-    max-width: 100%;
-}
-.my-message .reply-preview {
-    background: rgba(0, 0, 0, 0.2);
-    border-left-color: rgba(255,255,255,0.8);
-}
-.reply-preview-name { font-weight: 700; color: white; opacity: 0.9; margin-bottom: 2px; }
-.reply-preview-text { color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-
-
-/* --- РЕАКЦИИ --- */
-.reactions-row {
-    display: flex;
-    flex-wrap: wrap;
     gap: 4px;
+    justify-content: flex-end;
     margin-top: 2px;
 }
-/* Выравнивание реакций */
-.my-message .reactions-row { justify-content: flex-end; }
-
-.reaction-pill {
-    background: rgba(20, 20, 35, 0.8);
-    border: 1px solid var(--glass-border);
-    border-radius: 10px;
-    padding: 2px 6px;
-    font-size: 11px;
-    cursor: pointer;
-    display: flex; align-items: center; gap: 4px;
-    transition: 0.2s;
+.msg-time {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    opacity: 0; /* Скрыто по умолчанию для чистоты */
+    transition: opacity 0.2s;
 }
-.reaction-pill:hover { transform: scale(1.1); background: rgba(255,255,255,0.1); }
-.reaction-pill.active { background: rgba(138, 43, 226, 0.3); border-color: var(--primary); }
-
-
-/* --- МЕНЮ ДЕЙСТВИЙ (ПРИ НАВЕДЕНИИ) --- */
-.msg-actions {
-    position: absolute;
-    top: -20px;
-    right: 0;
-    background: rgba(20, 20, 35, 0.95);
-    border: 1px solid var(--glass-border);
-    border-radius: 8px;
-    padding: 2px;
-    display: flex;
-    gap: 2px;
-    opacity: 0; visibility: hidden;
-    transition: 0.2s;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    z-index: 10;
+/* Время внутри пузыря для моих, снаружи для чужих - или можно сделать float */
+.msg-bubble .msg-time-inline {
+    font-size: 9px;
+    opacity: 0.7;
+    float: right;
+    margin-left: 8px;
+    margin-top: 6px;
+    user-select: none;
 }
-/* Для своих сообщений меню слева */
-.my-message .msg-actions { right: auto; left: 0; }
-
-.action-btn {
-    width: 28px; height: 28px;
-    display: flex; justify-content: center; align-items: center;
-    cursor: pointer; color: #aaa; border-radius: 6px; font-size: 14px;
-}
-.action-btn:hover { background: rgba(255,255,255,0.1); color: white; }
-.action-btn.delete:hover { background: rgba(255, 75, 106, 0.2); color: #ff4b6a; }
 
 
-/* --- ПОЛЕ ВВОДА (НИЗ) --- */
-.input-container {
-    padding: 16px 24px;
-    display: flex;
-    flex-direction: column;
+/* --- REPLY (ОТВЕТ) --- */
+.reply-attachment {
     position: relative;
-    z-index: 30;
+    padding-left: 10px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    opacity: 0.8;
+    cursor: pointer;
 }
-
-/* Панель "Вы отвечаете" */
-.reply-bar {
-    display: none; /* Скрыто */
-    align-items: center; justify-content: space-between;
-    background: #1a1a2e;
-    border: 1px solid var(--glass-border);
-    border-bottom: none;
-    padding: 8px 16px;
-    border-radius: 16px 16px 0 0;
-    font-size: 13px; color: #ccc;
-    animation: slideUp 0.2s ease;
+.reply-attachment::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent);
+    border-radius: 2px;
 }
-@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.reply-name { font-weight: 700; font-size: 11px; margin-bottom: 2px; }
+.reply-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
-.reply-bar strong { color: var(--primary); margin-left: 5px; }
-.close-reply { cursor: pointer; padding: 4px; border-radius: 50%; }
-.close-reply:hover { background: rgba(255,255,255,0.1); color: white; }
+
+/* --- INPUT AREA (ПОЛЕ ВВОДА) --- */
+.input-container {
+    padding: 20px;
+    background: linear-gradient(to top, rgba(5,5,17,1) 20%, rgba(5,5,17,0));
+}
 
 .input-box {
-    background: rgba(20, 20, 35, 0.8);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    padding: 10px 10px 10px 20px;
-    border-radius: 20px;
+    background: rgba(30, 30, 40, 0.8);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 8px 8px 8px 20px;
     display: flex;
-    align-items: center;
+    align-items: flex-end; /* Чтобы кнопка была внизу при многострочном вводе */
     gap: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     transition: 0.3s;
 }
-/* Если открыт реплай - убираем верхние скругления */
-.reply-bar[style*="flex"] + .input-box {
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+.input-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.15);
+    background: rgba(40, 40, 55, 0.9);
 }
 
-.input-box.editing { border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
-.input-box:focus-within { border-color: var(--primary); box-shadow: 0 0 20px rgba(138, 43, 226, 0.15); }
-
-input { flex: 1; background: transparent; border: none; color: white; font-size: 16px; outline: none; font-family: inherit; }
+/* Замена input на textarea для авто-высоты */
+textarea#msg-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 15px;
+    font-family: inherit;
+    resize: none;
+    padding: 12px 0;
+    max-height: 120px;
+    min-height: 24px;
+    line-height: 1.5;
+    outline: none;
+    /* Кастомный скролл */
+    scrollbar-width: none;
+}
+textarea#msg-input::-webkit-scrollbar { display: none; }
 
 #send-btn {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, var(--primary), #b000e6);
-    border: none; border-radius: 14px;
-    color: white; cursor: pointer;
-    display: flex; justify-content: center; align-items: center;
-    transition: 0.2s;
-    box-shadow: 0 4px 10px rgba(138, 43, 226, 0.3);
+    width: 42px; height: 42px;
+    border-radius: 50%; /* Круглая кнопка */
+    flex-shrink: 0;
+    margin-bottom: 2px;
 }
-#send-btn:hover { transform: scale(1.05); }
-#send-btn:active { transform: scale(0.95); }
