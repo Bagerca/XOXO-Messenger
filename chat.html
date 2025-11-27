@@ -4,70 +4,101 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XOXO Messenger</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="chat.css">
 </head>
 <body>
 
-    <div class="app-layout">
+    <div class="app-container">
         
-        <!-- 1. БОКОВАЯ ПАНЕЛЬ (Слева) -->
+        <!-- ЛЕВАЯ ПАНЕЛЬ (СТЕКЛО) -->
         <aside class="sidebar">
-            <div class="app-logo">XOXO 🖤</div>
+            <div class="brand">
+                <div class="logo-glow">XO</div>
+                <span>Messenger</span>
+            </div>
             
-            <div class="channels-list">
-                <div class="channel-group">КОМНАТЫ</div>
-                <!-- Активный чат помечаем классом active -->
-                <div class="channel-item active" data-room="general"># общий-чат</div>
-                <div class="channel-item" data-room="love"># признания 💖</div>
-                <div class="channel-item" data-room="flood"># флудилка</div>
-                <div class="channel-item" data-room="homework"># домашка 📚</div>
+            <div class="nav-scroll">
+                <div class="nav-category">ГЛАВНОЕ</div>
+                
+                <button class="nav-item active" data-room="general">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span>Общий холл</span>
+                </button>
+
+                <button class="nav-item" data-room="love">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    <span>Признания</span>
+                </button>
+
+                <div class="nav-category">ШКОЛА</div>
+
+                <button class="nav-item" data-room="homework">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    <span>Домашка</span>
+                </button>
+
+                <button class="nav-item" data-room="flood">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span>Флудилка</span>
+                </button>
             </div>
 
-            <div class="my-profile">
-                <div class="avatar-circle" id="my-avatar">?</div>
-                <div class="profile-info">
-                    <div class="my-name" id="user-display">Загрузка...</div>
-                    <div class="my-status">Онлайн</div>
+            <!-- ПРОФИЛЬ КАРТОЧКА -->
+            <div class="profile-card">
+                <div class="avatar-wrapper">
+                    <div class="avatar" id="my-avatar"></div>
+                    <div class="status-dot"></div>
                 </div>
-                <button id="btn-settings" title="Настройки">⚙️</button>
+                <div class="profile-meta">
+                    <div class="username" id="user-display">Загрузка...</div>
+                    <div class="subtext">В сети</div>
+                </div>
+                <button id="btn-settings" class="icon-btn">⚙️</button>
             </div>
         </aside>
 
-        <!-- 2. ОСНОВНОЕ ОКНО ЧАТА (Справа) -->
-        <main class="chat-area">
+        <!-- ПРАВАЯ ЧАСТЬ (ЧАТ) -->
+        <main class="chat-wrapper">
+            <!-- ШАПКА ЧАТА -->
             <header class="chat-header">
-                <div class="header-title">
-                    <span class="hash">#</span> <span id="current-room-name">общий-чат</span>
+                <div class="header-left">
+                    <div class="room-icon">#</div>
+                    <div class="room-info">
+                        <h2 id="current-room-name">Общий холл</h2>
+                        <span class="room-desc">Здесь общаются все</span>
+                    </div>
                 </div>
-                <button id="btn-logout" class="logout-btn">Выйти</button>
+                <button id="btn-logout" class="btn-outlined">Выйти</button>
             </header>
 
+            <!-- ОКНО СООБЩЕНИЙ -->
             <div id="chat-window">
-                <!-- Сообщения падают сюда -->
+                <!-- Сообщения -->
             </div>
 
-            <div class="input-area">
-                <input type="text" id="msg-input" placeholder="Написать сообщение..." autocomplete="off">
-                <button id="send-btn">
-                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-                </button>
+            <!-- ПОЛЕ ВВОДА -->
+            <div class="input-container">
+                <div class="input-box">
+                    <input type="text" id="msg-input" placeholder="Написать сообщение..." autocomplete="off">
+                    <button id="send-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                    </button>
+                </div>
             </div>
         </main>
-
     </div>
 
-    <!-- 3. КОНТЕКСТНОЕ МЕНЮ (Скрыто, пока не нажмешь ПКМ) -->
+    <!-- Модалка и меню (оставляем скрытыми) -->
     <div id="context-menu" class="context-menu">
-        <div class="menu-item" id="btn-edit">✏️ Редактировать</div>
+        <div class="menu-item" id="btn-edit">✏️ Изменить</div>
         <div class="menu-item delete" id="btn-delete">🗑️ Удалить</div>
     </div>
 
-    <!-- 4. МОДАЛЬНОЕ ОКНО ПРОФИЛЯ (Скрыто) -->
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-window">
-            <h2>Мой профиль</h2>
-            <p>Сменить аватарку (ссылка на картинку):</p>
+            <h2>Твой образ 🎭</h2>
+            <p>Ссылка на аватарку:</p>
             <input type="text" id="avatar-input" placeholder="https://...">
             <div class="modal-buttons">
                 <button id="btn-save-profile">Сохранить</button>
