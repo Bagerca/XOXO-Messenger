@@ -7,13 +7,15 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="chat.css">
+    <!-- ПОДКЛЮЧАЕМ НОВЫЙ ФАЙЛ С ЭФФЕКТАМИ -->
+    <link rel="stylesheet" href="avatar-features.css">
 </head>
 <body>
 
     <div class="app-container">
         
-        <!-- ЛЕВАЯ ПАНЕЛЬ -->
         <aside class="sidebar">
+            <!-- Логотип (тот самый, красивый) -->
             <div class="brand">
                 <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -57,12 +59,9 @@
                 </button>
             </div>
 
-            <!-- ОБНОВЛЕННЫЙ ПРОФИЛЬ В САЙДБАРЕ -->
             <div class="profile-card">
-                <!-- Аватар с эффектом -->
                 <div class="avatar-wrapper" id="sidebar-avatar-wrap">
                     <div class="avatar" id="my-avatar"></div>
-                    <div class="avatar-sheen"></div> <!-- Блик -->
                     <div class="status-dot"></div>
                 </div>
                 <div class="profile-meta">
@@ -73,7 +72,6 @@
             </div>
         </aside>
 
-        <!-- ПРАВАЯ ЧАСТЬ (ЧАТ) -->
         <main class="chat-wrapper">
             <header class="chat-header">
                 <div class="header-left">
@@ -99,13 +97,13 @@
         </main>
     </div>
 
-    <!-- МЕНЮ УДАЛЕНИЯ -->
+    <!-- КОНТЕКСТНОЕ МЕНЮ -->
     <div id="context-menu" class="context-menu">
         <div class="menu-item" id="btn-edit">✏️ Изменить</div>
         <div class="menu-item delete" id="btn-delete">🗑️ Удалить</div>
     </div>
 
-    <!-- ОБНОВЛЕННОЕ ОКНО НАСТРОЕК (ПРОФИЛЬ) -->
+    <!-- ОКНО НАСТРОЕК (ПРОФИЛЬ) -->
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-window profile-window">
             <div class="modal-header">
@@ -114,34 +112,53 @@
             </div>
 
             <div class="modal-body">
-                <!-- Секция аватара -->
-                <div class="section-title">Твой Аватар</div>
+                
+                <!-- АВАТАР И ПРЕДПРОСМОТР -->
+                <div class="section-title">Визуализация</div>
                 <div class="avatar-selection">
-                    <div class="current-avatar-preview" id="preview-avatar"></div>
-                    <div class="avatar-grid" id="avatar-grid">
-                        <!-- Сюда JS добавит картинки -->
+                    <!-- Здесь показываем как будет выглядеть аватар со всеми рамками -->
+                    <div class="current-avatar-preview avatar" id="preview-avatar"></div>
+                    <div class="avatar-grid" id="avatar-grid"></div>
+                </div>
+
+                <!-- ВЫБОР РАМКИ -->
+                <div class="form-group">
+                    <label>Рамка (Frame)</label>
+                    <div class="feature-selector" id="frame-selector">
+                        <div class="feature-opt selected" data-val="">Нет</div>
+                        <div class="feature-opt" data-val="frame-gold">Золото</div>
+                        <div class="feature-opt" data-val="frame-neon">Неон</div>
+                        <div class="feature-opt" data-val="frame-fire">Огонь</div>
+                        <div class="feature-opt" data-val="frame-matrix">Хакер</div>
+                        <div class="feature-opt" data-val="frame-glass">Стекло</div>
                     </div>
                 </div>
 
-                <!-- Поля ввода -->
+                <!-- ВЫБОР ЭФФЕКТА -->
                 <div class="form-group">
-                    <label>Твой Никнейм</label>
-                    <input type="text" id="input-nickname" placeholder="Как тебя называть?">
-                </div>
-
-                <div class="form-group">
-                    <label>О себе (Статус)</label>
-                    <input type="text" id="input-bio" placeholder="Напиши что-нибудь крутое...">
-                </div>
-
-                <div class="form-group">
-                    <label>Пол</label>
-                    <div class="gender-selector">
-                        <div class="gender-option" data-value="male">🚹 Парень</div>
-                        <div class="gender-option" data-value="female">🚺 Девушка</div>
-                        <div class="gender-option" data-value="secret">👽 Секрет</div>
+                    <label>Эффект при наведении</label>
+                    <div class="feature-selector" id="effect-selector">
+                        <div class="feature-opt selected" data-val="">Нет</div>
+                        <div class="feature-opt" data-val="effect-sheen">Блик</div>
+                        <div class="feature-opt" data-val="effect-pulse">Пульс</div>
+                        <div class="feature-opt" data-val="effect-shake">Тряска</div>
+                        <div class="feature-opt" data-val="effect-glow">Свет</div>
+                        <div class="feature-opt" data-val="effect-noir">Нуар</div>
                     </div>
                 </div>
+
+                <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
+
+                <div class="form-group">
+                    <label>Никнейм</label>
+                    <input type="text" id="input-nickname" placeholder="Твой ник">
+                </div>
+
+                <div class="form-group">
+                    <label>Статус</label>
+                    <input type="text" id="input-bio" placeholder="О себе...">
+                </div>
+
             </div>
 
             <div class="modal-footer">
@@ -149,6 +166,17 @@
             </div>
         </div>
     </div>
+
+    <!-- Доп стили для селекторов (можно вынести в css, но пусть будут тут для простоты) -->
+    <style>
+        .feature-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+        .feature-opt {
+            padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px;
+            font-size: 12px; cursor: pointer; border: 1px solid transparent; color: #aaa;
+        }
+        .feature-opt:hover { background: rgba(255,255,255,0.1); color: white; }
+        .feature-opt.selected { background: var(--primary); color: white; border-color: var(--primary-glow); }
+    </style>
 
     <script type="module" src="chat.js"></script>
 </body>
