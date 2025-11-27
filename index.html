@@ -21,54 +21,73 @@
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             text-align: center;
-            max-width: 300px;
+            max-width: 320px;
             width: 100%;
         }
-        h1 { color: #ff4b6a; margin-bottom: 20px; }
+        h1 { color: #ff4b6a; margin-bottom: 10px; font-size: 2.5rem; }
+        p { color: #666; margin-bottom: 20px; }
+        
         input {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
             border: 2px solid #ffdde1;
             border-radius: 10px;
             font-size: 16px;
+            box-sizing: border-box; /* Чтобы padding не ломал ширину */
             outline: none;
+            transition: 0.3s;
         }
         input:focus { border-color: #ff4b6a; }
+        
         button {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: #ff4b6a;
             color: white;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 15px;
             transition: 0.3s;
         }
-        button:hover { background: #d63350; }
-        #error-msg { color: red; font-size: 14px; margin-top: 10px; display: none; }
+        button:hover { background: #d63350; transform: scale(1.02); }
+        
+        #error-msg { 
+            color: #d63350; 
+            font-size: 14px; 
+            margin-top: 15px; 
+            display: none; 
+            padding: 10px;
+            background: #ffe6e9;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
 
     <div class="login-card">
         <h1>XOXO 💖</h1>
-        <p>Вход в систему класса</p>
-        <input type="text" id="login" placeholder="Твой логин (например, test)">
-        <input type="password" id="password" placeholder="Секретный код">
+        <p>Введи свой никнейм</p>
+        
+        <!-- Поля ввода -->
+        <input type="text" id="login" placeholder="Логин (например: test)" autocomplete="off">
+        <input type="password" id="password" placeholder="Пароль">
+        
         <button id="btn-login">Войти</button>
-        <div id="error-msg">Ошибка входа</div>
+        
+        <!-- Блок для ошибок -->
+        <div id="error-msg"></div>
     </div>
 
     <!-- ТВОЙ КОД FIREBASE -->
     <script type="module">
-        // 1. Импортируем Firebase и Аутентификацию
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // 2. Твои настройки (Я их уже вставил)
+        // Твои настройки
         const firebaseConfig = {
             apiKey: "AIzaSyDhg4-QY-bWcmi55Y9BKAVV9c9T5cWCZOY",
             authDomain: "xoxo-messenger.firebaseapp.com",
@@ -78,38 +97,64 @@
             appId: "1:931225503438:web:a7ec6c5e79cab24578f29f"
         };
 
-        // 3. Запуск
+        // Запуск
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // 4. Логика кнопки "Войти"
+        // Логика кнопки "Войти"
         const loginBtn = document.getElementById('btn-login');
         const errorMsg = document.getElementById('error-msg');
+        const loginInput = document.getElementById('login');
+        const passwordInput = document.getElementById('password');
 
         loginBtn.addEventListener('click', () => {
-            const loginInput = document.getElementById('login').value.trim();
-            const passwordInput = document.getElementById('password').value;
+            // Очищаем прошлые ошибки
+            errorMsg.style.display = 'none';
 
-            // Хитрость: мы сами добавляем домен, чтобы дети писали только логин
-            const email = loginInput + "@xoxo.class"; 
+            // Берем значения и убираем пробелы
+            const login = loginInput.value.trim();
+            const password = passwordInput.value;
 
-            signInWithEmailAndPassword(auth, email, passwordInput)
+            // Проверка на пустоту
+            if (!login || !password) {
+                showError("Введите логин и пароль!");
+                return;
+            }
+
+            // Формируем "техническую" почту
+            const email = login + "@xoxo.com";
+            
+            console.log("Попытка входа:", email);
+
+            signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Если всё ок
+                    // Успех
                     console.log("Успешный вход:", userCredential.user);
-                    window.location.href = "chat.html"; // Переход в чат
+                    // Перенаправление на страницу чата
+                    window.location.href = "chat.html";
                 })
                 .catch((error) => {
-                    // Если ошибка
-                    console.error(error.code);
-                    errorMsg.style.display = 'block';
-                    if(error.code === 'auth/invalid-credential') {
-                        errorMsg.innerText = "Неверный логин или пароль 💔";
+                    // Ошибка
+                    console.error("Ошибка Firebase:", error.code);
+                    
+                    if (error.code === 'auth/invalid-email') {
+                        showError("Некорректный логин (используй английские буквы)");
+                    } else if (error.code === 'auth/invalid-credential') {
+                        showError("Неверный логин или пароль 💔");
+                    } else if (error.code === 'auth/user-not-found') {
+                        showError("Такой пользователь не найден");
+                    } else if (error.code === 'auth/wrong-password') {
+                        showError("Неверный пароль");
                     } else {
-                        errorMsg.innerText = "Ошибка: " + error.code;
+                        showError("Ошибка: " + error.code);
                     }
                 });
         });
+
+        function showError(text) {
+            errorMsg.innerText = text;
+            errorMsg.style.display = 'block';
+        }
     </script>
 </body>
 </html>
