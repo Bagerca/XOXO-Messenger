@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XOXO Messenger</title>
-    <!-- Иконка -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <!-- Шрифты -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <!-- Стили -->
     <link rel="stylesheet" href="chat.css">
     
-    <!-- ВАЖНО: Библиотеки для 3D -->
+    <!-- 3D Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
@@ -20,7 +17,7 @@
     <div class="app-container">
         
         <aside class="sidebar">
-            <!-- ЛОГОТИП -->
+            <!-- Логотип -->
             <div class="brand">
                 <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -64,22 +61,23 @@
                 </button>
             </div>
 
-            <!-- ПРОФИЛЬ (С WebGL Контейнером) -->
             <div class="profile-card">
                 <div class="avatar-wrapper" id="sidebar-avatar-wrap">
-                    <!-- Сюда Three.js вставит canvas -->
-                    <div id="webgl-avatar-container" style="width: 48px; height: 48px; border-radius: 14px; overflow: hidden; position: relative;"></div>
-                    <div class="status-dot"></div>
+                    <div id="webgl-avatar-container" class="webgl-container"></div>
+                    <!-- Статус (кружочек) -->
+                    <div class="status-dot" id="sidebar-status-dot"></div>
                 </div>
                 <div class="profile-meta">
                     <div class="username" id="user-display">Загрузка...</div>
                     <div class="subtext" id="user-status">Нажми для настройки</div>
                 </div>
-                <button id="btn-settings" class="icon-btn pulse-btn">⚙️</button>
+                <!-- Новая иконка шестеренки -->
+                <button id="btn-settings" class="icon-btn settings-gear">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
             </div>
         </aside>
 
-        <!-- ЧАТ -->
         <main class="chat-wrapper">
             <header class="chat-header">
                 <div class="header-left">
@@ -89,7 +87,7 @@
                         <span class="room-desc">Здесь общаются все</span>
                     </div>
                 </div>
-                <button id="btn-logout" class="btn-outlined">Выйти</button>
+                <!-- Кнопка выхода переехала в настройки, тут она не нужна -->
             </header>
 
             <div id="chat-window"></div>
@@ -111,49 +109,100 @@
         <div class="menu-item delete" id="btn-delete">🗑️ Удалить</div>
     </div>
 
-    <!-- МОДАЛКА НАСТРОЕК -->
+    <!-- НОВОЕ БОЛЬШОЕ ОКНО НАСТРОЕК -->
     <div id="profile-modal" class="modal-overlay">
-        <div class="modal-window profile-window">
-            <div class="modal-header">
-                <h2>Настройки Профиля</h2>
-                <button id="btn-close-modal" class="close-cross">×</button>
+        <div class="modal-window settings-modal">
+            
+            <!-- Левая колонка: Превью -->
+            <div class="settings-sidebar">
+                <div class="settings-preview-wrap">
+                    <!-- Отдельный канвас для превью настроек -->
+                    <div id="preview-avatar-container" class="preview-avatar-large"></div>
+                    <div class="preview-status-dot" id="preview-status-dot"></div>
+                </div>
+                <div class="settings-username-preview" id="preview-nickname">Никнейм</div>
             </div>
 
-            <div class="modal-body">
-                
-                <!-- АВАТАР -->
-                <div class="section-title">Визуализация</div>
-                <div class="avatar-selection">
-                    <div class="current-avatar-preview avatar" id="preview-avatar"></div>
-                    <div class="avatar-grid" id="avatar-grid"></div>
+            <!-- Правая колонка: Опции -->
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h2>Настройки профиля</h2>
+                    <button id="btn-close-modal" class="close-cross">×</button>
                 </div>
 
-                <!-- ВЫБОР ЭФФЕКТА (WebGL) -->
-                <div class="form-group">
-                    <label>WebGL Шейдер (Effect)</label>
-                    <div class="feature-selector" id="effect-selector">
-                        <div class="feature-opt selected" data-val="liquid">Liquid</div>
-                        <div class="feature-opt" data-val="glitch">Glitch</div>
-                        <div class="feature-opt" data-val="radio">Radio</div>
-                        <div class="feature-opt" data-val="chainsaw">Saw</div>
+                <div class="settings-scroll-area">
+                    
+                    <!-- 1. СТАТУС -->
+                    <div class="setting-group">
+                        <label>Твой статус</label>
+                        <div class="status-selector">
+                            <button class="status-btn online selected" data-status="online">
+                                <span class="dot online"></span> В сети
+                            </button>
+                            <button class="status-btn busy" data-status="busy">
+                                <span class="dot busy"></span> Не беспокоить
+                            </button>
+                            <button class="status-btn offline" data-status="offline">
+                                <span class="dot offline"></span> Невидимка
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label>Никнейм</label>
-                    <input type="text" id="input-nickname" placeholder="Твой ник">
-                </div>
+                    <!-- 2. ВЫБОР ШЕЙДЕРА -->
+                    <div class="setting-group">
+                        <label>Эффект Аватара (Наведи на фото слева)</label>
+                        <div class="shader-grid" id="effect-selector">
+                            <div class="shader-card" data-val="liquid">
+                                <div class="shader-icon">💧</div>
+                                <span>Liquid</span>
+                            </div>
+                            <div class="shader-card" data-val="glitch">
+                                <div class="shader-icon">⚡</div>
+                                <span>Glitch</span>
+                            </div>
+                            <div class="shader-card" data-val="radio">
+                                <div class="shader-icon">📺</div>
+                                <span>Radio</span>
+                            </div>
+                            <div class="shader-card" data-val="chainsaw">
+                                <div class="shader-icon">🩸</div>
+                                <span>Saw</span>
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label>Статус</label>
-                    <input type="text" id="input-bio" placeholder="О себе...">
-                </div>
+                    <!-- 3. ГАЛЕРЕЯ КАРТИНОК -->
+                    <div class="setting-group">
+                        <label>Сменить изображение</label>
+                        <div class="avatar-grid" id="avatar-grid"></div>
+                    </div>
 
+                    <!-- 4. ДАННЫЕ -->
+                    <div class="setting-group">
+                        <label>Имя пользователя</label>
+                        <input type="text" id="input-nickname" placeholder="Твое имя">
+                    </div>
+                    <div class="setting-group">
+                        <label>Обо мне</label>
+                        <input type="text" id="input-bio" placeholder="Твой статус или цитата">
+                    </div>
+
+                    <!-- 5. DANGER ZONE -->
+                    <div class="danger-zone">
+                        <div class="danger-text">
+                            <h4>Выход из аккаунта</h4>
+                            <p>Ты вернешься на экран входа.</p>
+                        </div>
+                        <button id="btn-logout-settings" class="btn-logout-danger">Выйти</button>
+                    </div>
+
+                </div>
+                
+                <div class="settings-footer">
+                    <button id="btn-save-profile" class="save-btn">Сохранить изменения</button>
+                </div>
             </div>
 
-            <div class="modal-footer">
-                <button id="btn-save-profile" class="save-btn">Сохранить изменения</button>
-            </div>
         </div>
     </div>
 
