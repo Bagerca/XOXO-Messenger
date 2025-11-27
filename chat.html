@@ -4,18 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XOXO Messenger</title>
+    <!-- Иконка -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- Шрифты -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Стили -->
     <link rel="stylesheet" href="chat.css">
-    <!-- ПОДКЛЮЧАЕМ НОВЫЙ ФАЙЛ С ЭФФЕКТАМИ -->
     <link rel="stylesheet" href="avatar-features.css">
+    
+    <!-- ВАЖНО: Библиотеки для 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
 
     <div class="app-container">
         
         <aside class="sidebar">
-            <!-- Логотип (тот самый, красивый) -->
+            <!-- ЛОГОТИП -->
             <div class="brand">
                 <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -59,9 +65,11 @@
                 </button>
             </div>
 
+            <!-- ПРОФИЛЬ (С WebGL Контейнером) -->
             <div class="profile-card">
                 <div class="avatar-wrapper" id="sidebar-avatar-wrap">
-                    <div class="avatar" id="my-avatar"></div>
+                    <!-- Сюда Three.js вставит canvas -->
+                    <div id="webgl-avatar-container" style="width: 48px; height: 48px; border-radius: 14px; overflow: hidden; position: relative;"></div>
                     <div class="status-dot"></div>
                 </div>
                 <div class="profile-meta">
@@ -72,6 +80,7 @@
             </div>
         </aside>
 
+        <!-- ЧАТ -->
         <main class="chat-wrapper">
             <header class="chat-header">
                 <div class="header-left">
@@ -103,7 +112,7 @@
         <div class="menu-item delete" id="btn-delete">🗑️ Удалить</div>
     </div>
 
-    <!-- ОКНО НАСТРОЕК (ПРОФИЛЬ) -->
+    <!-- МОДАЛКА НАСТРОЕК -->
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-window profile-window">
             <div class="modal-header">
@@ -113,41 +122,23 @@
 
             <div class="modal-body">
                 
-                <!-- АВАТАР И ПРЕДПРОСМОТР -->
+                <!-- АВАТАР -->
                 <div class="section-title">Визуализация</div>
                 <div class="avatar-selection">
-                    <!-- Здесь показываем как будет выглядеть аватар со всеми рамками -->
                     <div class="current-avatar-preview avatar" id="preview-avatar"></div>
                     <div class="avatar-grid" id="avatar-grid"></div>
                 </div>
 
-                <!-- ВЫБОР РАМКИ -->
+                <!-- ВЫБОР ЭФФЕКТА (WebGL) -->
                 <div class="form-group">
-                    <label>Рамка (Frame)</label>
-                    <div class="feature-selector" id="frame-selector">
-                        <div class="feature-opt selected" data-val="">Нет</div>
-                        <div class="feature-opt" data-val="frame-gold">Золото</div>
-                        <div class="feature-opt" data-val="frame-neon">Неон</div>
-                        <div class="feature-opt" data-val="frame-fire">Огонь</div>
-                        <div class="feature-opt" data-val="frame-matrix">Хакер</div>
-                        <div class="feature-opt" data-val="frame-glass">Стекло</div>
-                    </div>
-                </div>
-
-                <!-- ВЫБОР ЭФФЕКТА -->
-                <div class="form-group">
-                    <label>Эффект при наведении</label>
+                    <label>WebGL Шейдер (Effect)</label>
                     <div class="feature-selector" id="effect-selector">
-                        <div class="feature-opt selected" data-val="">Нет</div>
-                        <div class="feature-opt" data-val="effect-sheen">Блик</div>
-                        <div class="feature-opt" data-val="effect-pulse">Пульс</div>
-                        <div class="feature-opt" data-val="effect-shake">Тряска</div>
-                        <div class="feature-opt" data-val="effect-glow">Свет</div>
-                        <div class="feature-opt" data-val="effect-noir">Нуар</div>
+                        <div class="feature-opt selected" data-val="liquid">Liquid</div>
+                        <div class="feature-opt" data-val="glitch">Glitch</div>
+                        <div class="feature-opt" data-val="radio">Radio</div>
+                        <div class="feature-opt" data-val="chainsaw">Saw</div>
                     </div>
                 </div>
-
-                <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
 
                 <div class="form-group">
                     <label>Никнейм</label>
@@ -166,17 +157,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Доп стили для селекторов (можно вынести в css, но пусть будут тут для простоты) -->
-    <style>
-        .feature-selector { display: flex; gap: 8px; flex-wrap: wrap; }
-        .feature-opt {
-            padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px;
-            font-size: 12px; cursor: pointer; border: 1px solid transparent; color: #aaa;
-        }
-        .feature-opt:hover { background: rgba(255,255,255,0.1); color: white; }
-        .feature-opt.selected { background: var(--primary); color: white; border-color: var(--primary-glow); }
-    </style>
 
     <script type="module" src="chat.js"></script>
 </body>
