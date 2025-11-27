@@ -4,27 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XOXO Messenger</title>
-    <!-- Иконка -->
+    <!-- Иконка вкладки -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     
     <!-- Шрифты -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Стили (Подключаем все модули) -->
+    <!-- Стили (Модульные) -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/chat-window.css">
     <link rel="stylesheet" href="css/settings.css">
-    
-    <!-- Библиотеки для 3D (WebGL) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
 
     <div class="app-container">
         
-        <!-- ЛЕВАЯ ПАНЕЛЬ -->
+        <!-- ЛЕВАЯ ПАНЕЛЬ (SIDEBAR) -->
         <aside class="sidebar">
             <!-- Логотип -->
             <div class="brand">
@@ -49,7 +45,7 @@
                 </div>
             </div>
             
-            <!-- Каналы -->
+            <!-- Список каналов -->
             <div class="nav-scroll">
                 <div class="nav-category">ГЛАВНОЕ</div>
                 <button class="nav-item active" data-room="general">
@@ -71,7 +67,7 @@
                 </button>
             </div>
 
-            <!-- Мини-профиль -->
+            <!-- Мини-профиль внизу -->
             <div class="profile-card">
                 <div class="avatar-wrapper" id="sidebar-avatar-wrap">
                     <!-- Сюда JS вставит 3D canvas -->
@@ -88,7 +84,7 @@
             </div>
         </aside>
 
-        <!-- ЧАТ -->
+        <!-- ПРАВАЯ ПАНЕЛЬ (ЧАТ) -->
         <main class="chat-wrapper">
             <header class="chat-header">
                 <div class="header-left">
@@ -100,10 +96,12 @@
                 </div>
             </header>
 
-            <div id="chat-window"></div>
+            <div id="chat-window">
+                <!-- Сообщения -->
+            </div>
 
             <div class="input-container">
-                <!-- Панель "Вы отвечаете..." -->
+                <!-- Панель "Вы отвечаете..." (Скрыта по умолчанию) -->
                 <div id="reply-bar" class="reply-bar">
                     <div>Ответ пользователю <span id="reply-to-name">Name</span></div>
                     <div id="cancel-reply" class="close-reply">✕</div>
@@ -119,17 +117,17 @@
         </main>
     </div>
 
-    <!-- МЕНЮ СООБЩЕНИЙ -->
+    <!-- МЕНЮ СООБЩЕНИЙ (КОНТЕКСТНОЕ) -->
     <div id="context-menu" class="context-menu">
         <div class="menu-item" id="btn-edit">✏️ Изменить</div>
         <div class="menu-item delete" id="btn-delete">🗑️ Удалить</div>
     </div>
 
-    <!-- ОКНО НАСТРОЕК -->
+    <!-- ОКНО НАСТРОЕК (MODAL) -->
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-window settings-modal">
             
-            <!-- Левая часть: Превью -->
+            <!-- Левая колонка: Превью -->
             <div class="settings-sidebar">
                 <div class="settings-preview-wrap">
                     <div id="preview-avatar-container" class="preview-avatar-large"></div>
@@ -138,7 +136,7 @@
                 <div class="settings-username-preview" id="preview-nickname">Имя</div>
             </div>
 
-            <!-- Правая часть: Опции -->
+            <!-- Правая колонка: Опции -->
             <div class="settings-content">
                 <div class="settings-header">
                     <h2>Настройки профиля</h2>
@@ -163,7 +161,7 @@
                         </div>
                     </div>
 
-                    <!-- 2. Эффекты -->
+                    <!-- 2. Эффекты (Шейдеры) -->
                     <div class="setting-group">
                         <label>3D Эффект</label>
                         <div class="shader-grid" id="effect-selector">
@@ -192,7 +190,7 @@
                         <div class="avatar-grid" id="avatar-grid"></div>
                     </div>
 
-                    <!-- 4. Текст -->
+                    <!-- 4. Данные -->
                     <div class="setting-group">
                         <label>Имя</label>
                         <input type="text" id="input-nickname" placeholder="Твое имя">
