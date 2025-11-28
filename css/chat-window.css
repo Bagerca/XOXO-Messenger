@@ -35,35 +35,44 @@
 .room-desc { font-size: 12px; color: #888; }
 
 
-/* --- ОКНО ЧАТА (СКРОЛЛ) --- */
+/* --- ОКНО ЧАТА (ОСНОВНОЙ ФИКС) --- */
 #chat-window {
     flex: 1;
     padding: 20px 0;
+    
+    /* ВКЛЮЧАЕМ BLOCK ВМЕСТО FLEX */
+    /* Это "ядерное решение": элементы в block-контейнере
+       никогда не растягиваются на всю высоту экрана */
+    display: block !important; 
+    
     overflow-y: auto;
     overflow-x: hidden;
-    
-    display: flex;
-    flex-direction: column;
-    /* ВАЖНО: Прижимает сообщения к верху, не давая им растягиваться на весь экран */
-    justify-content: flex-start !important; 
-    gap: 8px; /* Расстояние между сообщениями */
 }
 
 /* --- СТРОКА СООБЩЕНИЯ --- */
 .message-row {
+    /* Сама строка остается flex, чтобы выровнять аватар и текст */
     display: flex;
+    align-items: flex-end; /* Прижимаем аватарку к низу строки */
+    
     width: 100%;
     padding: 0 24px;
     box-sizing: border-box;
     position: relative;
     
-    /* ФИКС РАСТЯГИВАНИЯ */
-    flex: 0 0 auto !important; /* Запрет на рост и сжатие */
-    height: auto !important;   /* Высота только по контенту */
-    min-height: min-content;
+    /* Сбрасываем любые попытки растягивания */
+    height: auto !important;
+    min-height: 0 !important;
+    flex: none !important;
+    
+    /* Отступ вместо gap, так как у родителя теперь display: block */
+    margin-bottom: 8px;
 }
 
+/* При наведении показываем кнопки действий */
 .message-row:hover .msg-actions { opacity: 1; visibility: visible; transform: translateY(0); }
+
+/* Отступ для начала группы сообщений */
 .message-row.group-start { margin-top: 16px; }
 
 
@@ -72,7 +81,7 @@
     width: 42px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end; /* Аватарка всегда внизу группы сообщений */
+    justify-content: flex-end;
     margin-right: 12px;
     flex-shrink: 0;
 }
@@ -82,7 +91,7 @@
     background-size: cover;
     background-position: center;
     background-color: #333;
-    display: none;
+    display: none; /* Скрыт по умолчанию */
 }
 /* Показываем аватар только у последнего сообщения в группе */
 .message-row.group-end .msg-avatar { display: block; }
@@ -92,10 +101,11 @@
 .msg-content-wrapper {
     display: flex;
     flex-direction: column;
-    max-width: 65%; /* Ограничение ширины сообщения */
+    max-width: 65%;
     position: relative;
     height: auto !important;
 }
+
 .msg-sender-name {
     font-size: 12px; font-weight: 700; color: #8f92a1;
     margin-bottom: 4px; margin-left: 2px;
@@ -109,7 +119,6 @@
     line-height: 1.5;
     color: #eee;
     
-    /* Перенос длинных слов */
     word-wrap: break-word;
     word-break: break-word; 
     white-space: pre-wrap;
@@ -117,7 +126,7 @@
     position: relative;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     
-    /* ФИКС РАСТЯГИВАНИЯ ПУЗЫРЯ */
+    /* Размеры строго по контенту */
     width: fit-content; 
     height: auto !important;
 }
@@ -158,7 +167,7 @@
 .message-row.right.group-end .msg-bubble { border-bottom-right-radius: 4px; }
 
 
-/* --- ВЛОЖЕНИЯ (REPLY) И ДЕЙСТВИЯ --- */
+/* --- ВЛОЖЕНИЯ И ДЕЙСТВИЯ --- */
 .reply-attachment {
     background: rgba(0,0,0,0.2); padding: 6px 10px; margin-bottom: 6px;
     border-radius: 6px; border-left: 2px solid #00f2ff; cursor: pointer;
@@ -172,7 +181,7 @@
     background: rgba(20, 20, 35, 0.95); padding: 4px; border-radius: 8px;
     display: flex; gap: 4px; opacity: 0; visibility: hidden; transition: 0.2s;
     border: 1px solid rgba(255,255,255,0.1);
-    z-index: 5;
+    z-index: 10;
 }
 .message-row.right .msg-actions { right: auto; left: 20px; }
 .action-btn { width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #ccc; }
@@ -187,7 +196,7 @@
     padding: 24px;
     background: linear-gradient(to top, rgba(5,5,17,1) 20%, rgba(5,5,17,0));
     display: flex; flex-direction: column;
-    flex-shrink: 0; /* Чтобы поле ввода не сжималось */
+    flex-shrink: 0;
 }
 .input-box {
     background: rgba(30, 30, 40, 0.7); backdrop-filter: blur(20px);
@@ -195,7 +204,6 @@
     padding: 8px 16px; display: flex; align-items: flex-end; gap: 10px;
     transition: 0.3s;
 }
-/* Подсветка при редактировании */
 .input-box.editing { border-color: #00f2ff; box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
 
 textarea#msg-input {
@@ -211,7 +219,7 @@ textarea#msg-input {
 }
 #send-btn:hover { transform: scale(1.05); }
 
-/* Reply Bar styles */
+/* Reply Bar */
 .reply-bar { display: none; background: rgba(30,30,45,0.9); padding: 8px 16px; border-radius: 16px 16px 0 0; justify-content: space-between; align-items: center; margin: 0 10px; font-size: 13px; color: #ccc; border: 1px solid rgba(255,255,255,0.1); border-bottom: none; }
 .reply-bar[style*="flex"] + .input-box { border-top-left-radius: 4px; border-top-right-radius: 4px; }
 .close-reply { cursor: pointer; padding: 5px; font-weight: bold; }
