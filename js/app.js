@@ -147,16 +147,13 @@ function updateActiveButtons(activeId) {
 
     if(activeId === 'general') {
         btnHome.classList.add('active');
-    } else {
-        // Так как список перерисовывается, мы просто ищем нужный элемент в рендере, 
-        // но здесь проще просто оставить highlight logic внутри renderRoomsList при следующем апдейте,
-        // либо найти кнопку руками:
-        // (Для простоты оставим визуальное обновление на совести renderRoomsList при следующем клике,
-        // но добавим временный класс сейчас)
-        const buttons = Array.from(document.querySelectorAll('.room-btn'));
-        const target = buttons.find(b => b.innerText.includes(chatUI.currentRoomName)); // Грубый поиск
-        // В идеале добавить data-id кнопкам
     }
+    // Кнопка в списке подсветится при следующем рендере (snapshot) или можно форсировать:
+    const activeBtn = Array.from(document.querySelectorAll('.room-btn')).find(b => {
+        // Грубая проверка, лучше через data-id, но пока так
+        return b.innerText.includes(chatUI.currentRoomName);
+    });
+    if(activeBtn) activeBtn.classList.add('active');
 }
 // Добавляем Listener на Home
 btnHome.addEventListener('click', () => tryEnterRoom('general'));
@@ -169,11 +166,15 @@ btnOpenCreate.addEventListener('click', () => {
     modalCreate.classList.add('open');
     inpRoomName.value = "";
     inpRoomPass.value = "";
-    radiosType[0].checked = true; // Public check
+    if(radiosType[0]) radiosType[0].checked = true; // Сброс на Public
     divRoomPass.style.display = 'none';
+    
+    // Фокус на поле ввода
+    setTimeout(() => inpRoomName.focus(), 100);
 });
 
-radiosType.forEach(radio => {
+// Исправленный слушатель для радио-кнопок
+Array.from(radiosType).forEach(radio => {
     radio.addEventListener('change', (e) => {
         divRoomPass.style.display = e.target.value === 'private' ? 'block' : 'none';
     });
@@ -183,10 +184,18 @@ btnCancelCreate.addEventListener('click', () => modalCreate.classList.remove('op
 
 btnConfirmCreate.addEventListener('click', async () => {
     const name = inpRoomName.value.trim();
-    const type = document.querySelector('input[name="roomType"]:checked').value;
+    
+    // Безопасное получение типа
+    const checkedRadio = document.querySelector('input[name="roomType"]:checked');
+    const type = checkedRadio ? checkedRadio.value : 'public';
+    
     const pass = inpRoomPass.value.trim();
 
-    if(!name) return;
+    if(!name) {
+        alert("Введите название комнаты!");
+        return;
+    }
+    
     if(type === 'private' && !pass) {
         alert("Укажите пароль для приватной комнаты");
         return;
@@ -198,6 +207,7 @@ btnConfirmCreate.addEventListener('click', async () => {
         modalCreate.classList.remove('open');
     } catch(e) {
         console.error(e);
+        alert("Ошибка создания: " + e.message);
     } finally {
         btnConfirmCreate.innerText = "Создать";
     }
@@ -231,7 +241,7 @@ btnConfirmPass.addEventListener('click', () => {
 
 
 // ==========================================
-// НАСТРОЙКИ ПРОФИЛЯ (Старый код)
+// НАСТРОЙКИ ПРОФИЛЯ
 // ==========================================
 
 function openSettings() {
