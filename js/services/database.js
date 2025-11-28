@@ -24,6 +24,22 @@ export const ChatService = {
         await updateDoc(ref, data);
     },
 
+    // НОВОЕ: Получить массив пользователей по ID (для списка участников)
+    getUsersByIds: async (userIds) => {
+        if (!userIds || userIds.length === 0) return [];
+        
+        // Для простоты делаем параллельные getDoc.
+        // Если пользователей очень много, этот метод нужно оптимизировать.
+        const promises = userIds.map(uid => getDoc(doc(db, "users", uid)));
+        const snapshots = await Promise.all(promises);
+        
+        return snapshots.map(snap => {
+            if (snap.exists()) return { uid: snap.id, ...snap.data() };
+            // Заглушка, если юзер не найден
+            return { uid: snap.id, nickname: "Неизвестный", avatar: "", status: "offline", frame: "frame-none" };
+        });
+    },
+
     // --- КАТЕГОРИИ ---
     createCategory: async (name) => {
         await addDoc(collection(db, "categories"), {
@@ -116,13 +132,13 @@ export const ChatService = {
         }
     },
 
-    // Обновить сообщение (для редактирования или закрепления)
+    // НОВОЕ: Обновить сообщение (для редактирования или закрепления)
     updateMessage: async (msgId, data) => {
         const ref = doc(db, "messages", msgId);
         await updateDoc(ref, data);
     },
 
-    // Удалить сообщение
+    // НОВОЕ: Удалить сообщение
     deleteMessage: async (msgId) => {
         const ref = doc(db, "messages", msgId);
         await deleteDoc(ref);
