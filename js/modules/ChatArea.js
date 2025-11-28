@@ -41,12 +41,12 @@ export class ChatArea {
         this.currentRoomId = "general";
         
         // Gallery State
-        this.galleryImages = []; // Список всех картинок в чате
+        this.galleryImages = []; 
         this.currentImageIndex = 0;
 
         this.setupListeners();
         this.initContextMenu();
-        this.initLightbox(); // Инициализация лайтбокса
+        this.initLightbox(); 
     }
 
     setupListeners() {
@@ -92,15 +92,13 @@ export class ChatArea {
         });
     }
 
+    // --- LIGHTBOX LOGIC ---
     initLightbox() {
-        // Кнопки управления
         document.getElementById('lb-close').onclick = () => this.closeLightbox();
         document.querySelector('.lightbox-overlay').onclick = () => this.closeLightbox();
-        
         document.getElementById('lb-prev').onclick = (e) => { e.stopPropagation(); this.changeImage(-1); };
         document.getElementById('lb-next').onclick = (e) => { e.stopPropagation(); this.changeImage(1); };
 
-        // Клавиатура
         document.addEventListener('keydown', (e) => {
             if (!this.lb.classList.contains('active')) return;
             if (e.key === "Escape") this.closeLightbox();
@@ -122,10 +120,8 @@ export class ChatArea {
 
     changeImage(step) {
         let newIndex = this.currentImageIndex + step;
-        // Зацикливание (опционально) или остановка
         if (newIndex < 0) newIndex = this.galleryImages.length - 1;
         if (newIndex >= this.galleryImages.length) newIndex = 0;
-        
         this.currentImageIndex = newIndex;
         this.updateLightboxUI();
     }
@@ -134,7 +130,6 @@ export class ChatArea {
         const data = this.galleryImages[this.currentImageIndex];
         if(!data) return;
 
-        // Анимация смены (сброс)
         this.lbImg.style.opacity = 0.5;
         setTimeout(() => this.lbImg.style.opacity = 1, 150);
 
@@ -142,17 +137,137 @@ export class ChatArea {
         this.lbSender.innerText = data.sender;
         this.lbTime.innerText = new Date(data.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
-        // Очищаем текст от HTML тегов и самой картинки для подписи
         const temp = document.createElement('div');
         temp.innerHTML = data.rawText;
-        // Удаляем все картинки из темпового дива, чтобы показать только текст
         temp.querySelectorAll('img').forEach(img => img.remove());
-        const textOnly = temp.innerText.trim();
-        
-        this.lbCaption.innerText = textOnly || ""; // Если текста нет, пусто
+        this.lbCaption.innerText = temp.innerText.trim() || "";
     }
 
-    // --- CONTEXT MENU & ACTIONS (Оставляем без изменений логику) ---
+    // --- RENDERING ---
+    loadRoom(roomId, roomName, desc = "") {
+        this.currentRoomId = roomId;
+        this.currentPinnedMsgId = null;
+        this.pinnedBar.style.display = 'none';
+
+        this.titleEl.style.opacity = 0;
+        setTimeout(() => {
+            this.titleEl.innerText = roomId === this.currentUser.uid ? "Избранное" : "# " + roomName;
+            this.descEl.innerText = desc;
+            this.titleEl.style.opacity = 1;
+        }, 200);
+
+        this.container.innerHTML = '<div style="text-align:center; padding:20px; color:#555;">Загрузка...</div>';
+        if (this.unsubscribe) this.unsubscribe();
+        this.unsubscribe = ChatService.subscribeToMessages(roomId, (messages) => this.renderMessages(messages));
+    }
+
+    renderMessages(messages) {
+        this.container.innerHTML = "";
+        this.galleryImages = [];
+
+        const pinnedMsg = [...messages].reverse().find(m => m.isPinned);
+        if (pinnedMsg) {
+            this.currentPinnedMsgId = pinnedMsg.id;
+            this.pinnedBar.style.display = 'flex';
+            const temp = document.createElement('div');
+            temp.innerHTML = pinnedMsg.text;
+            this.pinnedPreview.innerText = temp.innerText.substring(0, 50) + (temp.innerText.length > 50 ? '...' : '');
+        } else {
+            this.pinnedBar.style.display = 'none';
+            this.currentPinnedMsgId = null;
+        }
+
+        if(messages.length === 0) {
+            this.container.innerHTML = '<div style="text-align:center; padding:40px; color:#555;">Тишина...<br>Напиши первым!</div>';
+            return;
+        }
+
+        messages.forEach(msg => {
+            const isMe = msg.senderEmail === this.currentUser.email;
+            const row = document.createElement("div");
+            row.className = `message-row ${isMe ? "me" : "them"}`;
+            row.id = `msg-${msg.id}`;
+            row.dataset.msg = encodeURIComponent(JSON.stringify(msg));
+
+            // Форматируем сообщение (текст + сетка картинок)
+            const formattedContent = this.formatMessage(msg.text, msg);
+
+            const time = new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const editedMark = msg.isEdited ? '<span style="font-size:9px; opacity:0.6;">(ред.)</span>' : '';
+            const fwdMark = msg.type === 'forward' ? '<div style="font-size:10px; color:#aaa; margin-bottom:2px;">↩ Переслано</div>' : '';
+
+            const html = `
+                ${!isMe ? `<div class="avatar" style="background-image: url('${msg.senderAvatar || "avatars/Ari LoL.png"}')"></div>` : ''}
+                <div class="bubble-wrapper">
+                    ${!isMe ? `<div class="name">${msg.sender}</div>` : ''}
+                    <div class="bubble">
+                        ${fwdMark}
+                        <div class="content">${formattedContent}</div>
+                        <div class="time">${time} ${editedMark}</div>
+                    </div>
+                </div>
+            `;
+            row.innerHTML = html;
+            
+            row.querySelectorAll('.spoiler').forEach(sp => sp.addEventListener('click', () => sp.classList.toggle('revealed')));
+            
+            // Навешиваем клик на картинки для Lightbox
+            row.querySelectorAll('img').forEach(img => {
+                if(!img.closest('.avatar')) {
+                    // Ищем эту картинку в галерее по src
+                    const imgIndex = this.galleryImages.findIndex(item => item.src === img.src);
+                    if(imgIndex !== -1) {
+                        img.onclick = () => this.openLightbox(imgIndex);
+                    }
+                }
+            });
+
+            this.container.appendChild(row);
+        });
+        
+        this.container.scrollTop = this.container.scrollHeight;
+    }
+
+    // МЕТОД ФОРМАТИРОВАНИЯ: Отделяет текст от картинок
+    formatMessage(rawHtml, msgObj) {
+        const temp = document.createElement('div');
+        temp.innerHTML = rawHtml;
+
+        const images = Array.from(temp.querySelectorAll('img'));
+        
+        // Если картинок нет, возвращаем чистый HTML
+        if (images.length === 0) {
+            return this.sanitizeHTML(rawHtml);
+        }
+
+        // Заполняем галерею
+        images.forEach(img => {
+            this.galleryImages.push({
+                src: img.src,
+                sender: msgObj.sender,
+                time: msgObj.createdAt,
+                rawText: temp.innerText 
+            });
+        });
+
+        // Убираем картинки из текста
+        images.forEach(img => img.remove());
+        let textContent = temp.innerHTML.replace(/<br\s*\/?>/gi, '').trim();
+        if (textContent) textContent = `<div>${this.sanitizeHTML(textContent)}</div>`;
+
+        // Строим сетку
+        let gridHtml = `<div class="media-grid" data-count="${images.length}">`;
+        images.forEach(img => {
+            // Для 1 картинки используем img тег (чтобы работали max-width/height из CSS)
+            // Для 2+ используем div с background (для кропа)
+            gridHtml += `<div class="media-item" style="background-image: url('${img.src}')"><img src="${img.src}"></div>`;
+        });
+        gridHtml += `</div>`;
+
+        return textContent + gridHtml;
+    }
+
+    // --- CONTEXT MENU & ACTIONS ---
     initContextMenu() {
         document.addEventListener('click', () => this.hideContextMenu());
         document.addEventListener('contextmenu', (e) => {
@@ -272,94 +387,7 @@ export class ChatArea {
         this.editModal.classList.remove('open');
     }
 
-    loadRoom(roomId, roomName, desc = "") {
-        this.currentRoomId = roomId;
-        this.currentPinnedMsgId = null;
-        this.pinnedBar.style.display = 'none';
-
-        this.titleEl.style.opacity = 0;
-        setTimeout(() => {
-            this.titleEl.innerText = roomId === this.currentUser.uid ? "Избранное" : "# " + roomName;
-            this.descEl.innerText = desc;
-            this.titleEl.style.opacity = 1;
-        }, 200);
-
-        this.container.innerHTML = '<div style="text-align:center; padding:20px; color:#555;">Загрузка...</div>';
-        if (this.unsubscribe) this.unsubscribe();
-        this.unsubscribe = ChatService.subscribeToMessages(roomId, (messages) => this.renderMessages(messages));
-    }
-
-    renderMessages(messages) {
-        this.container.innerHTML = "";
-        this.galleryImages = []; // Сброс галереи
-
-        const pinnedMsg = [...messages].reverse().find(m => m.isPinned);
-        if (pinnedMsg) {
-            this.currentPinnedMsgId = pinnedMsg.id;
-            this.pinnedBar.style.display = 'flex';
-            const temp = document.createElement('div');
-            temp.innerHTML = pinnedMsg.text;
-            this.pinnedPreview.innerText = temp.innerText.substring(0, 50) + (temp.innerText.length > 50 ? '...' : '');
-        } else {
-            this.pinnedBar.style.display = 'none';
-            this.currentPinnedMsgId = null;
-        }
-
-        if(messages.length === 0) {
-            this.container.innerHTML = '<div style="text-align:center; padding:40px; color:#555;">Тишина...<br>Напиши первым!</div>';
-            return;
-        }
-
-        messages.forEach(msg => {
-            const isMe = msg.senderEmail === this.currentUser.email;
-            const row = document.createElement("div");
-            row.className = `message-row ${isMe ? "me" : "them"}`;
-            row.id = `msg-${msg.id}`;
-            row.dataset.msg = encodeURIComponent(JSON.stringify(msg));
-
-            const safeContent = this.sanitizeHTML(msg.text);
-            const time = new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const editedMark = msg.isEdited ? '<span style="font-size:9px; opacity:0.6;">(ред.)</span>' : '';
-            const fwdMark = msg.type === 'forward' ? '<div style="font-size:10px; color:#aaa; margin-bottom:2px;">↩ Переслано</div>' : '';
-
-            const html = `
-                ${!isMe ? `<div class="avatar" style="background-image: url('${msg.senderAvatar || "avatars/Ari LoL.png"}')"></div>` : ''}
-                <div class="bubble-wrapper">
-                    ${!isMe ? `<div class="name">${msg.sender}</div>` : ''}
-                    <div class="bubble">
-                        ${fwdMark}
-                        <div class="content">${safeContent}</div>
-                        <div class="time">${time} ${editedMark}</div>
-                    </div>
-                </div>
-            `;
-            row.innerHTML = html;
-            
-            row.querySelectorAll('.spoiler').forEach(sp => sp.addEventListener('click', () => sp.classList.toggle('revealed')));
-            
-            // ОБРАБОТКА КАРТИНОК ДЛЯ ЛАЙТБОКСА
-            row.querySelectorAll('img').forEach(img => {
-                if(!img.closest('.avatar')) {
-                    // Добавляем в глобальную галерею
-                    const imgIndex = this.galleryImages.length;
-                    this.galleryImages.push({
-                        src: img.src,
-                        sender: msg.sender,
-                        time: msg.createdAt,
-                        rawText: msg.text // Храним полный текст для подписи
-                    });
-
-                    // Клик открывает лайтбокс
-                    img.onclick = () => this.openLightbox(imgIndex);
-                }
-            });
-
-            this.container.appendChild(row);
-        });
-        
-        this.container.scrollTop = this.container.scrollHeight;
-    }
-
+    // --- HELPERS ---
     async sendMessage() {
         const content = this.richInput.innerHTML.trim();
         if (!content || content === '<br>') return;
