@@ -3,7 +3,7 @@ import { ChatService } from "./services/database.js";
 import { ChatArea } from "./modules/ChatArea.js";
 import { ChatList } from "./modules/ChatList.js";
 import { ProfileManager } from "./modules/Profile.js";
-import { RightSidebar } from "./modules/RightSidebar.js"; // НОВОЕ: Импорт
+import { RightSidebar } from "./modules/RightSidebar.js";
 
 // State
 let currentUser = null;
@@ -11,7 +11,7 @@ let currentProfile = null;
 let chatArea = null;
 let chatList = null;
 let profileManager = null;
-let rightSidebar = null; // НОВОЕ: Переменная
+let rightSidebar = null;
 
 // Modals for creation
 const btnCreateMenu = document.getElementById('btn-create-menu');
@@ -32,54 +32,86 @@ AuthService.monitor(async (user) => {
     chatArea = new ChatArea(user, currentProfile);
     chatList = new ChatList(user, chatArea, document.getElementById('rooms-list-container'));
     profileManager = new ProfileManager(user, currentProfile);
-    
-    // НОВОЕ: Инициализация правой панели
     rightSidebar = new RightSidebar(user); 
 
-    // 2. Начальный вход
-    enterRoom("general", "Общий холл", "Открытый чат");
+    // 2. Начальный вход (Общий холл)
+    // Передаем объект, имитирующий комнату
+    enterRoom({ id: "general", name: "Общий холл", type: "public", members: [] });
 
     // 3. Обработка кликов из ChatList (через EventBus)
     document.addEventListener('room-selected', (e) => {
-        const room = e.detail;
-        enterRoom(room.id, room.name, room.type === 'private' ? 'Закрытая группа' : 'Публичная группа', room.ownerId, room.type, room.password);
+        enterRoom(e.detail);
     });
 });
 
-// Logic to enter room (Handles password)
+// Logic to enter room (Handles password & Auto-join)
 let pendingRoom = null;
 
-function enterRoom(id, name, desc = "", ownerId = null, type = 'public', password = "") {
-    // Check password
+function enterRoom(room) {
+    const { id, name, type, password, ownerId, members } = room;
+    // Определяем описание
+    let desc = "";
+    if (id === 'general') desc = "Открытый чат";
+    else if (id === currentUser.uid) desc = "Личные заметки";
+    else desc = type === 'private' ? 'Закрытая группа' : 'Публичная группа';
+
+    // Проверка пароля (только если это приватная группа и мы не владелец и не участник)
     if (type === 'private' && ownerId !== currentUser.uid) {
-        pendingRoom = { id, name, desc, ownerId, password };
-        modalPass.classList.add('open');
-        document.getElementById('join-room-pass').value = "";
-        return;
+        const amIMember = members && members.includes(currentUser.uid);
+        if (!amIMember) {
+            pendingRoom = { ...room, desc };
+            modalPass.classList.add('open');
+            document.getElementById('join-room-pass').value = "";
+            return;
+        }
     }
-    performEnter(id, name, desc, ownerId);
+    
+    performEnter(id, name, desc, ownerId, members);
 }
 
-function performEnter(id, name, desc, ownerId) {
+async function performEnter(id, name, desc, ownerId, members) {
     // UI Updates
     document.getElementById('btn-home').classList.toggle('active', id === 'general');
     document.getElementById('btn-saved').classList.toggle('active', id === currentUser.uid);
     document.querySelectorAll('.room-item').forEach(b => b.classList.remove('active'));
     
-    // Highlight sidebar item (rough logic as list rerenders)
     const activeItem = document.querySelector(`[data-room-id="${id}"]`);
     if(activeItem) activeItem.classList.add('active');
 
-    // Show Edit button
+    // Кнопка редактирования только для владельца
     if(btnEditRoom) btnEditRoom.style.display = (ownerId === currentUser.uid) ? 'block' : 'none';
-    if(ownerId === currentUser.uid) window.editingRoomId = id; // Global var for edit modal
+    if(ownerId === currentUser.uid) window.editingRoomId = id;
 
+    // Загружаем область чата
     chatArea.loadRoom(id, name, desc);
+
+    // АВТО-ВСТУПЛЕНИЕ:
+    // Если это не General, не Избранное и меня нет в списке -> добавляем
+    if (id !== 'general' && id !== currentUser.uid) {
+        if (members && !members.includes(currentUser.uid)) {
+            await ChatService.joinRoom(id, currentUser.uid);
+            // Визуально добавляем, чтобы сразу обновить UI
+            members.push(currentUser.uid);
+        }
+    }
+
+    // Обновляем правую панель
+    if(rightSidebar) {
+        // Если General -> передаем null в members, чтобы Sidebar понял, что грузить всех
+        // Если Избранное -> передаем только себя
+        let membersToLoad = members;
+        if (id === 'general') membersToLoad = null; 
+        if (id === currentUser.uid) membersToLoad = [currentUser.uid];
+
+        rightSidebar.loadRoom({
+            id, name, type: (id === 'general' ? 'public' : 'custom'), avatar: '', members: membersToLoad
+        });
+    }
 }
 
 // Global Listeners (Navigation)
-document.getElementById('btn-home').addEventListener('click', () => enterRoom("general", "Общий холл", "Открытый чат"));
-document.getElementById('btn-saved').addEventListener('click', () => enterRoom(currentUser.uid, "Избранное", "Личные заметки"));
+document.getElementById('btn-home').addEventListener('click', () => enterRoom({ id: "general", name: "Общий холл", members: [] }));
+document.getElementById('btn-saved').addEventListener('click', () => enterRoom({ id: currentUser.uid, name: "Избранное", members: [] }));
 
 // Menu & Modals Logic
 btnCreateMenu.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('open'); });
@@ -119,7 +151,8 @@ document.getElementById('btn-confirm-pass').addEventListener('click', () => {
     const val = document.getElementById('join-room-pass').value;
     if(val === pendingRoom.password) {
         modalPass.classList.remove('open');
-        performEnter(pendingRoom.id, pendingRoom.name, pendingRoom.desc, pendingRoom.ownerId);
+        // Повторный вызов с теми же данными
+        performEnter(pendingRoom.id, pendingRoom.name, pendingRoom.desc, pendingRoom.ownerId, pendingRoom.members);
     } else {
         alert("Неверный пароль");
     }
