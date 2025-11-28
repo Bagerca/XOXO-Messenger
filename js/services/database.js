@@ -5,11 +5,9 @@ import {
 
 export const ChatService = {
     // --- ПРОФИЛИ ---
-
     getProfile: async (uid, email) => {
         const ref = doc(db, "users", uid);
         const snap = await getDoc(ref);
-        
         if (snap.exists()) return snap.data();
         
         const defaultProfile = {
@@ -31,19 +29,18 @@ export const ChatService = {
         await updateDoc(ref, data);
     },
 
-    // --- КОМНАТЫ (НОВОЕ) ---
-
-    // Создать комнату
-    createRoom: async (roomName, createdBy) => {
+    // --- КОМНАТЫ (ОБНОВЛЕНО) ---
+    // Теперь принимает тип и пароль
+    createRoom: async (name, type, password, createdBy) => {
         await addDoc(collection(db, "rooms"), {
-            name: roomName,
+            name: name,
+            type: type, // 'public' или 'private'
+            password: password || "", 
             createdAt: Date.now(),
-            createdBy: createdBy,
-            type: "public"
+            createdBy: createdBy
         });
     },
 
-    // Слушать список комнат
     subscribeToRooms: (callback) => {
         const q = query(collection(db, "rooms"), orderBy("createdAt", "asc"));
         return onSnapshot(q, (snapshot) => {
@@ -53,16 +50,9 @@ export const ChatService = {
     },
 
     // --- СООБЩЕНИЯ ---
-
     subscribeToMessages: (roomId, callback) => {
-        // Если roomId пришел как "general", используем строку "general" (для совместимости)
         const target = roomId || "general";
-
-        const q = query(
-            collection(db, "messages"),
-            where("room", "==", target),
-            orderBy("createdAt", "asc")
-        );
+        const q = query(collection(db, "messages"), where("room", "==", target), orderBy("createdAt", "asc"));
         return onSnapshot(q, (snapshot) => {
             const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             callback(messages);
