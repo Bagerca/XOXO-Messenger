@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XOXO Login</title>
+    <!-- Подключаем шрифт -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Подключаем стиль входа -->
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+    <div class="login-container">
+        <!-- Декоративные пятна на фоне -->
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+
+        <div class="login-card">
+            <div class="brand">
+                <h1>XOXO</h1>
+                <span>MESSENGER</span>
+            </div>
+            
+            <div class="form-group">
+                <label>Твой никнейм</label>
+                <input type="text" id="login-input" placeholder="Например: neo" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="password-input" placeholder="••••••">
+            </div>
+            
+            <button id="btn-login">Войти в систему</button>
+            
+            <div id="error-msg" class="error-msg"></div>
+        </div>
+    </div>
+
+    <!-- Логика входа -->
+    <script type="module" src="js/login.js"></script>
+</body>
+</html>
