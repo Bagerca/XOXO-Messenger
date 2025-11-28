@@ -3,13 +3,18 @@ import gsap from 'https://unpkg.com/gsap@3.12.5/index.js';
 import { vertexShader, transitions } from './shaders.js';
 
 export class AvatarRenderer {
-    constructor(containerId, imageUrl) {
+    constructor(containerId, imageUrl, options = {}) {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
         this.width = this.container.offsetWidth;
         this.height = this.container.offsetHeight;
         
+        // Настройки по умолчанию
+        this.options = Object.assign({
+            intensity: 0.3
+        }, options);
+
         this.init();
         this.loadImage(imageUrl);
         this.addEvents();
@@ -26,7 +31,7 @@ export class AvatarRenderer {
         this.renderer.setSize(this.width, this.height);
         this.container.appendChild(this.renderer.domElement);
 
-        // Создаем шум для Liquid эффекта
+        // Генерация шума
         const size = 128;
         const data = new Uint8Array(size * size * 4);
         for (let i = 0; i < size * size * 4; i++) data[i] = Math.random() * 255;
@@ -34,24 +39,45 @@ export class AvatarRenderer {
         this.dispTexture.needsUpdate = true;
     }
 
-    loadImage(url) {
+    // Метод для динамической смены аватарки
+    updateImage(url) {
         new THREE.TextureLoader().load(url, (tex) => {
             tex.minFilter = THREE.LinearFilter;
-            this.createMesh(tex);
+            tex.generateMipmaps = false;
+            
+            // Если материал уже есть, просто обновляем текстуры
+            if (this.material) {
+                this.material.uniforms.texture1.value = tex;
+                this.material.uniforms.texture2.value = tex;
+                this.render();
+            } else {
+                this.createMesh(tex);
+            }
         });
     }
 
+    // Метод для обновления настроек (интенсивность)
+    updateSettings(newOptions) {
+        this.options = Object.assign(this.options, newOptions);
+        if (this.material) {
+            this.material.uniforms.intensity.value = this.options.intensity;
+            this.render();
+        }
+    }
+
+    loadImage(url) {
+        this.updateImage(url);
+    }
+
     createMesh(texture) {
-        if (this.mesh) this.scene.remove(this.mesh);
-        
-        const transition = transitions.liquid; // Пока только Liquid для простоты
+        const transition = transitions.liquid;
         
         this.uniforms = {
             texture1: { value: texture },
             texture2: { value: texture },
             disp: { value: this.dispTexture },
             dispFactor: { value: 0.0 },
-            intensity: { value: 0.3 }
+            intensity: { value: this.options.intensity }
         };
 
         this.material = new THREE.ShaderMaterial({
@@ -69,10 +95,20 @@ export class AvatarRenderer {
 
     addEvents() {
         this.container.addEventListener('mouseenter', () => {
-            gsap.to(this.uniforms.dispFactor, { value: 1, duration: 1, onUpdate: () => this.render() });
+            gsap.to(this.uniforms.dispFactor, { 
+                value: 1, 
+                duration: 1, 
+                ease: "power2.out",
+                onUpdate: () => this.render() 
+            });
         });
         this.container.addEventListener('mouseleave', () => {
-            gsap.to(this.uniforms.dispFactor, { value: 0, duration: 1, onUpdate: () => this.render() });
+            gsap.to(this.uniforms.dispFactor, { 
+                value: 0, 
+                duration: 1, 
+                ease: "power2.inOut",
+                onUpdate: () => this.render() 
+            });
         });
     }
 
