@@ -91,6 +91,7 @@ export class ChatArea {
             }
         });
 
+        // Слушаем запрос от правой панели на открытие фото
         document.addEventListener('request-lightbox', (e) => {
             const src = e.detail.src;
             const idx = this.galleryImages.findIndex(img => img.src === src);
@@ -197,7 +198,7 @@ export class ChatArea {
             row.id = `msg-${msg.id}`;
             row.dataset.msg = encodeURIComponent(JSON.stringify(msg));
 
-            // Форматируем сообщение
+            // Форматируем сообщение (текст + сетка картинок + сохранение стилей)
             const formattedContent = this.formatMessage(msg.text, msg);
 
             const time = new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -219,7 +220,7 @@ export class ChatArea {
             
             row.querySelectorAll('.spoiler').forEach(sp => sp.addEventListener('click', () => sp.classList.toggle('revealed')));
             
-            // Клики на элементы сетки
+            // Навешиваем клик на элементы сетки
             row.querySelectorAll('.media-item').forEach(item => {
                 item.onclick = (e) => {
                     e.stopPropagation();
@@ -228,7 +229,7 @@ export class ChatArea {
                 };
             });
 
-            // Клики на одиночные картинки (страховка)
+            // Навешиваем клик на одиночные картинки (страховка)
             row.querySelectorAll('img').forEach(img => {
                 if(!img.closest('.avatar') && !img.closest('.media-item')) {
                     const idx = this.galleryImages.findIndex(x => x.src === img.src);
@@ -242,7 +243,7 @@ export class ChatArea {
         this.container.scrollTop = this.container.scrollHeight;
     }
 
-    // УМНЫЙ ПАРСЕР
+    // УМНЫЙ ПАРСЕР (С ПОДДЕРЖКОЙ ВЫРАВНИВАНИЯ)
     formatMessage(rawHtml, msgObj) {
         const temp = document.createElement('div');
         temp.innerHTML = rawHtml;
@@ -284,21 +285,32 @@ export class ChatArea {
         };
 
         nodes.forEach(node => {
+            // Игнорируем пустые текстовые узлы
             if (node.nodeType === 3 && !node.textContent.trim()) return;
 
             if (node.nodeName === 'IMG') {
                 imageGroup.push(node);
             } 
             else if (node.nodeName === 'BR') {
+                // Если идет перенос строки, а у нас копятся картинки — игнорируем его
                 if (imageGroup.length === 0) resultHtml += '<br>';
             }
             else {
                 flushImages();
+
                 if (node.nodeType === 3) {
+                    // Текстовый узел
                     resultHtml += `<div class="text-part">${this.sanitizeHTML(node.textContent)}</div>`;
                 } else {
+                    // HTML узел (div, b, p и т.д.)
+                    // СОХРАНЯЕМ СТИЛИ (выравнивание)
+                    let styleAttr = '';
+                    if (node.getAttribute && node.getAttribute('style')) {
+                        styleAttr = ` style="${node.getAttribute('style')}"`;
+                    }
+                    
                     const cleanInner = this.sanitizeHTML(node.innerHTML);
-                    resultHtml += `<div class="text-part">${cleanInner}</div>`;
+                    resultHtml += `<div class="text-part"${styleAttr}>${cleanInner}</div>`;
                 }
             }
         });
