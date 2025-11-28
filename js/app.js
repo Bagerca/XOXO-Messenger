@@ -3,7 +3,7 @@ import { ChatService } from "./services/database.js";
 import { AvatarRenderer } from "./core/avatar.js";
 import { ChatUI } from "./ui/chat-ui.js";
 
-// --- Глобальные переменные ---
+// Глобальные переменные
 let currentUser = null;
 let currentProfile = null;
 let chatUI = null;
@@ -11,31 +11,28 @@ let mainAvatarRenderer = null;
 let previewAvatarRenderer = null;
 let tempState = {}; 
 
-// Список разблокированных приватных комнат (ID)
-const unlockedRooms = new Set(['general']);
-
-// Элементы навигации
+// Элементы
 const roomsListContainer = document.getElementById('rooms-list-container');
 const btnHome = document.getElementById('btn-home');
+const btnSaved = document.getElementById('btn-saved');
+const roomTitle = document.getElementById('room-title');
+const roomDesc = document.getElementById('room-desc');
+const btnEditRoom = document.getElementById('btn-edit-room');
 
-// Элементы Модалки Создания
+// Модалка Создания
 const modalCreate = document.getElementById('create-room-modal');
 const btnOpenCreate = document.getElementById('btn-create-room-toggle');
 const btnCancelCreate = document.getElementById('btn-cancel-create');
 const btnConfirmCreate = document.getElementById('btn-confirm-create');
-const inpRoomName = document.getElementById('new-room-name');
 const radiosType = document.getElementsByName('roomType');
-const divRoomPass = document.getElementById('room-pass-container');
-const inpRoomPass = document.getElementById('new-room-pass');
 
-// Элементы Модалки Пароля
-const modalPass = document.getElementById('password-modal');
-const inpJoinPass = document.getElementById('join-room-pass');
-const btnCancelPass = document.getElementById('btn-cancel-pass');
-const btnConfirmPass = document.getElementById('btn-confirm-pass');
-let pendingRoomData = null; // Данные комнаты, которую пытаемся открыть
+// Модалка Редактирования
+const modalEdit = document.getElementById('edit-room-modal');
+const btnCancelEdit = document.getElementById('btn-cancel-edit');
+const btnConfirmEdit = document.getElementById('btn-confirm-edit');
+let editingRoomId = null;
 
-// Элементы Настроек
+// Настройки профиля
 const modalSettings = document.getElementById('settings-modal');
 const statusPopup = document.getElementById('status-popup');
 const statusDot = document.getElementById('current-status-dot');
@@ -48,195 +45,201 @@ const viewVisuals = document.getElementById('view-visuals');
 
 // --- ИНИЦИАЛИЗАЦИЯ ---
 AuthService.monitor(async (user) => {
-    if (!user) {
-        window.location.href = "index.html";
-        return;
-    }
+    if (!user) { window.location.href = "index.html"; return; }
     currentUser = user;
     currentProfile = await ChatService.getProfile(user.uid, user.email);
 
-    // 1. Старт Чата
+    // 1. Чат
     chatUI = new ChatUI(user, currentProfile);
-    chatUI.loadRoom("general", "Общий холл");
+    enterRoom("general", "Общий холл", "Открытый чат");
 
-    // 2. Аватар в сайдбаре
-    mainAvatarRenderer = new AvatarRenderer("my-avatar-3d", currentProfile.avatar, {
-        effect: currentProfile.effect || 'liquid',
-        intensity: 0.3
-    });
-
+    // 2. Аватар
+    mainAvatarRenderer = new AvatarRenderer("my-avatar-3d", currentProfile.avatar, { effect: currentProfile.effect || 'liquid' });
     updateSidebarUI(currentProfile);
 
-    // 3. Подписка на комнаты
+    // 3. Комнаты
     ChatService.subscribeToRooms((rooms) => {
-        renderRoomsList(rooms);
+        renderGroupedRooms(rooms);
     });
 
-    // 4. Превью аватар для настроек
-    previewAvatarRenderer = new AvatarRenderer("prev-avatar-3d", currentProfile.avatar, {
-        effect: currentProfile.effect || 'liquid', intensity: 0.5
-    });
+    // 4. Превью для настроек
+    previewAvatarRenderer = new AvatarRenderer("prev-avatar-3d", currentProfile.avatar, { effect: 'liquid', intensity: 0.5 });
 });
 
 function updateSidebarUI(profile) {
     document.getElementById("my-name").innerText = profile.nickname;
-    document.getElementById("my-status-text").innerText = profile.bio;
-    document.getElementById("my-banner-bg").style.backgroundImage = 
-        profile.banner && profile.banner !== 'none' ? `url('${profile.banner}')` : 'none';
+    document.getElementById("my-banner-bg").style.backgroundImage = profile.banner !== 'none' ? `url('${profile.banner}')` : 'none';
     document.getElementById("my-avatar-frame").className = `avatar-frame ${profile.frame || 'frame-none'}`;
     statusDot.className = `status-dot ${profile.status || 'online'}`;
     if(mainAvatarRenderer) mainAvatarRenderer.updateSettings({ effect: profile.effect || 'liquid' });
 }
 
-
 // ==========================================
-// ЛОГИКА КОМНАТ И НАВИГАЦИИ
+// ЛОГИКА КОМНАТ И КАТЕГОРИЙ
 // ==========================================
 
-function renderRoomsList(rooms) {
+function renderGroupedRooms(rooms) {
     roomsListContainer.innerHTML = '';
     
-    rooms.forEach(room => {
-        // "General" мы обрабатываем отдельно кнопкой "Домой"
-        if(room.id === 'general') return;
-
-        const btn = document.createElement('button');
-        btn.className = 'room-btn';
-        if(chatUI && chatUI.currentRoomId === room.id) btn.classList.add('active');
-        
-        // Иконка
-        const icon = room.type === 'private' ? '🔒' : '#';
-        btn.innerHTML = `<span class="room-icon">${icon}</span> ${room.name}`;
-        
-        btn.addEventListener('click', () => {
-            tryEnterRoom(room);
-        });
-        roomsListContainer.appendChild(btn);
-    });
-}
-
-// Попытка входа в комнату
-function tryEnterRoom(room) {
-    // 1. Вход в Общий холл
-    if (room === 'general') {
-        updateActiveButtons('general');
-        chatUI.loadRoom('general', 'Общий холл');
-        document.getElementById('room-lock-icon').style.display = 'none';
-        return;
-    }
-
-    // 2. Вход в Приватную комнату (проверка)
-    if (room.type === 'private' && !unlockedRooms.has(room.id)) {
-        openPasswordModal(room);
-        return;
-    }
-
-    // 3. Вход разрешен
-    updateActiveButtons(room.id);
-    chatUI.loadRoom(room.id, room.name);
+    // 1. Фильтруем и Группируем
+    const categories = {};
     
-    const lockIcon = document.getElementById('room-lock-icon');
-    if(room.type === 'private') lockIcon.style.display = 'block';
-    else lockIcon.style.display = 'none';
-}
+    rooms.forEach(room => {
+        // Приватность: Если комната private, показываем только участникам (или владельцу)
+        const isMember = room.members && room.members.includes(currentUser.uid);
+        const isOwner = room.ownerId === currentUser.uid;
+        
+        // Если комната приватная, и мы не владелец и не участник -> скрываем
+        if (room.type === 'private' && !isMember && !isOwner) return;
 
-function updateActiveButtons(activeId) {
-    // Сбрасываем active везде
-    btnHome.classList.remove('active');
-    document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+        // "General" мы рендерим отдельно как кнопку, пропускаем здесь
+        if (room.id === 'general') return;
 
-    if(activeId === 'general') {
-        btnHome.classList.add('active');
-    }
-    // Кнопка в списке подсветится при следующем рендере (snapshot) или можно форсировать:
-    const activeBtn = Array.from(document.querySelectorAll('.room-btn')).find(b => {
-        // Грубая проверка, лучше через data-id, но пока так
-        return b.innerText.includes(chatUI.currentRoomName);
+        const cat = room.category || "Разное";
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(room);
     });
-    if(activeBtn) activeBtn.classList.add('active');
+
+    // 2. Рендерим
+    // Сортируем названия категорий
+    Object.keys(categories).sort().forEach(catName => {
+        // Блок категории
+        const catBlock = document.createElement('div');
+        catBlock.className = 'category-block';
+        
+        const catTitle = document.createElement('div');
+        catTitle.className = 'cat-title';
+        catTitle.innerText = catName;
+        catBlock.appendChild(catTitle);
+
+        // Комнаты в категории
+        categories[catName].forEach(room => {
+            const btn = document.createElement('button');
+            btn.className = 'room-item';
+            if (chatUI.currentRoomId === room.id) btn.classList.add('active');
+
+            // Аватар комнаты
+            let avatarHtml = `<div class="room-avatar">#</div>`;
+            if (room.avatar && room.avatar.startsWith('http')) {
+                avatarHtml = `<div class="room-avatar" style="background-image: url('${room.avatar}')"></div>`;
+            }
+
+            btn.innerHTML = `
+                ${avatarHtml}
+                <div class="room-info">
+                    <span class="room-name">${room.name}</span>
+                    <span class="room-meta">${room.type === 'private' ? '🔒 Приватный' : 'Публичный'}</span>
+                </div>
+            `;
+            
+            btn.addEventListener('click', () => {
+                enterRoom(room.id, room.name, room.type === 'private' ? 'Закрытая группа' : 'Публичная группа', room.ownerId);
+            });
+
+            catBlock.appendChild(btn);
+        });
+
+        roomsListContainer.appendChild(catBlock);
+    });
 }
-// Добавляем Listener на Home
-btnHome.addEventListener('click', () => tryEnterRoom('general'));
+
+function enterRoom(id, name, desc = "", ownerId = null) {
+    // UI Активность
+    if(btnHome) btnHome.classList.remove('active');
+    if(btnSaved) btnSaved.classList.remove('active');
+    document.querySelectorAll('.room-item').forEach(b => b.classList.remove('active'));
+
+    if (id === 'general') {
+        if(btnHome) btnHome.classList.add('active');
+        if(btnEditRoom) btnEditRoom.style.display = 'none';
+    } else if (id === currentUser.uid) { // Избранное
+        if(btnSaved) btnSaved.classList.add('active');
+        if(btnEditRoom) btnEditRoom.style.display = 'none';
+    } else {
+        // Кнопка редактирования (только для владельца)
+        if (ownerId === currentUser.uid) {
+            if(btnEditRoom) {
+                btnEditRoom.style.display = 'block';
+                editingRoomId = id;
+            }
+        } else {
+            if(btnEditRoom) btnEditRoom.style.display = 'none';
+        }
+    }
+
+    // Загрузка
+    chatUI.loadRoom(id, name);
+    if(roomDesc) roomDesc.innerText = desc;
+}
+
+// КЛИКИ ПО ЗАКРЕПЛЕННЫМ
+btnHome.addEventListener('click', () => enterRoom("general", "Общий холл", "Открытый чат"));
+btnSaved.addEventListener('click', () => {
+    // Сохраненные сообщения: используем ID пользователя как ID комнаты
+    enterRoom(currentUser.uid, "Избранное", "Личные заметки");
+});
 
 
 // ==========================================
-// СОЗДАНИЕ КОМНАТЫ
+// СОЗДАНИЕ ГРУППЫ
 // ==========================================
 btnOpenCreate.addEventListener('click', () => {
     modalCreate.classList.add('open');
-    inpRoomName.value = "";
-    inpRoomPass.value = "";
-    if(radiosType[0]) radiosType[0].checked = true; // Сброс на Public
-    divRoomPass.style.display = 'none';
-    
-    // Фокус на поле ввода
-    setTimeout(() => inpRoomName.focus(), 100);
 });
+btnCancelCreate.addEventListener('click', () => modalCreate.classList.remove('open'));
 
-// Исправленный слушатель для радио-кнопок
-Array.from(radiosType).forEach(radio => {
-    radio.addEventListener('change', (e) => {
-        divRoomPass.style.display = e.target.value === 'private' ? 'block' : 'none';
+// Хинт для приватности
+Array.from(radiosType).forEach(r => {
+    r.addEventListener('change', (e) => {
+        const hint = document.getElementById('private-hint');
+        if(hint) hint.style.display = e.target.value === 'private' ? 'block' : 'none';
     });
 });
 
-btnCancelCreate.addEventListener('click', () => modalCreate.classList.remove('open'));
-
 btnConfirmCreate.addEventListener('click', async () => {
-    const name = inpRoomName.value.trim();
-    
-    // Безопасное получение типа
+    const name = document.getElementById('new-room-name').value.trim();
+    const cat = document.getElementById('new-room-cat').value.trim();
+    const avatar = document.getElementById('new-room-avatar').value.trim();
     const checkedRadio = document.querySelector('input[name="roomType"]:checked');
     const type = checkedRadio ? checkedRadio.value : 'public';
-    
-    const pass = inpRoomPass.value.trim();
 
-    if(!name) {
-        alert("Введите название комнаты!");
-        return;
-    }
-    
-    if(type === 'private' && !pass) {
-        alert("Укажите пароль для приватной комнаты");
-        return;
-    }
+    if (!name) return alert("Введите название");
 
-    btnConfirmCreate.innerText = "...";
+    btnConfirmCreate.innerText = "Создаем...";
     try {
-        await ChatService.createRoom(name, type, pass, currentUser.email);
+        await ChatService.createRoom({
+            name, category: cat, avatar, type
+        }, currentUser.uid);
         modalCreate.classList.remove('open');
-    } catch(e) {
-        console.error(e);
-        alert("Ошибка создания: " + e.message);
-    } finally {
-        btnConfirmCreate.innerText = "Создать";
-    }
+    } catch(e) { console.error(e); } 
+    finally { btnConfirmCreate.innerText = "Создать"; }
 });
 
 
 // ==========================================
-// ПРОВЕРКА ПАРОЛЯ
+// РЕДАКТИРОВАНИЕ ГРУППЫ (Владелец)
 // ==========================================
-function openPasswordModal(room) {
-    pendingRoomData = room;
-    modalPass.classList.add('open');
-    inpJoinPass.value = "";
-    inpJoinPass.focus();
-}
-btnCancelPass.addEventListener('click', () => {
-    modalPass.classList.remove('open');
-    pendingRoomData = null;
+btnEditRoom.addEventListener('click', () => {
+    modalEdit.classList.add('open');
 });
-btnConfirmPass.addEventListener('click', () => {
-    const entered = inpJoinPass.value.trim();
-    if (entered === pendingRoomData.password) {
-        unlockedRooms.add(pendingRoomData.id); // Запоминаем что открыли
-        modalPass.classList.remove('open');
-        tryEnterRoom(pendingRoomData); // Повторный вход (теперь пустит)
-    } else {
-        alert("Неверный пароль!");
-        inpJoinPass.value = "";
+btnCancelEdit.addEventListener('click', () => modalEdit.classList.remove('open'));
+
+btnConfirmEdit.addEventListener('click', async () => {
+    const newName = document.getElementById('edit-room-name').value.trim();
+    const newAvatar = document.getElementById('edit-room-avatar').value.trim();
+
+    if (!editingRoomId) return;
+
+    const updateData = {};
+    if (newName) updateData.name = newName;
+    if (newAvatar) updateData.avatar = newAvatar;
+
+    if (Object.keys(updateData).length > 0) {
+        await ChatService.updateRoom(editingRoomId, updateData);
+        // Обновляем заголовок сразу
+        if(newName) document.getElementById('room-title').innerText = "# " + newName;
     }
+    modalEdit.classList.remove('open');
 });
 
 
