@@ -1,3 +1,5 @@
+/* --- css/sidebar.css --- */
+
 .sidebar {
     width: 300px;
     background: rgba(10, 10, 18, 0.98);
@@ -9,15 +11,119 @@
 .sidebar-logo { width: 38px; height: 38px; filter: drop-shadow(0 0 8px rgba(138,43,226,0.4)); }
 .logo-text { font-size: 22px; font-weight: 800; }
 
-/* Закрепленные */
+/* --- АКТИВНЫЙ ЭЛЕМЕНТ (GLITCH STYLE) --- */
+/* Общий миксин для активных кнопок (Home, Saved, Rooms) */
+.nav-item-lg.active, .room-item.active {
+    background: linear-gradient(90deg, rgba(138,43,226,0.25) 0%, transparent 100%);
+    position: relative;
+    border-radius: 8px; /* Немного скруглим углы контейнера */
+}
+
+/* Фиолетовая полоска слева (как на скрине) */
+.nav-item-lg.active::before, .room-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 70%; /* Не на всю высоту */
+    width: 4px;
+    background: #8A2BE2;
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 10px #8A2BE2;
+}
+
+/* Глич-эффект для текста активного элемента */
+.nav-item-lg.active .nav-title, 
+.room-item.active .room-name {
+    color: white;
+    text-shadow: 2px 0 rgba(255,0,0,0.5), -2px 0 rgba(0,255,255,0.5);
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+/* --- ЗАКРЕПЛЕННЫЕ --- */
 .nav-pinned { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
-.nav-item-lg { display: flex; align-items: center; gap: 12px; width: 100%; background: transparent; border: none; padding: 8px; border-radius: 14px; cursor: pointer; transition: 0.2s; text-align: left; }
-.nav-item-lg:hover { background: rgba(255,255,255,0.04); }
-.nav-item-lg.active { background: rgba(255,255,255,0.07); }
-.nav-icon-box { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+.nav-item-lg {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    background: transparent; border: none; padding: 10px 12px;
+    border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: left;
+    color: #888; /* Серый по умолчанию */
+}
+.nav-item-lg:hover { background: rgba(255,255,255,0.04); color: #ccc; }
+
+.nav-icon-box {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    font-size: 18px;
+}
 .nav-text { display: flex; flex-direction: column; overflow: hidden; }
-.nav-title { font-weight: 700; font-size: 14px; color: white; }
-.nav-desc { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 500; }
+.nav-title { font-weight: 600; font-size: 14px; transition: 0.2s; }
+
+
+/* --- СПИСОК КОМНАТ --- */
+.rooms-nav {
+    flex: 1; overflow-y: auto; padding-right: 4px; 
+    display: flex; flex-direction: column; gap: 4px;
+    padding-bottom: 50px; /* Место внизу для дропа */
+}
+.rooms-nav::-webkit-scrollbar { width: 4px; }
+.rooms-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+/* Подсветка зоны дропа (когда тащим чат в корень) */
+.rooms-nav.drag-over-root {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 2px rgba(138,43,226, 0.2);
+}
+
+/* Категория */
+.category-container {
+    display: flex; flex-direction: column; 
+    margin-top: 10px; margin-bottom: 2px;
+    border-radius: 12px; transition: 0.2s;
+}
+.category-container.drag-over {
+    background: rgba(138,43,226, 0.15);
+    box-shadow: inset 0 0 0 2px rgba(138,43,226, 0.3);
+}
+
+.category-header {
+    display: flex; align-items: center; gap: 6px; padding: 6px 8px;
+    font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.3);
+    text-transform: uppercase; letter-spacing: 1px; 
+    cursor: pointer; transition: 0.2s;
+}
+.category-header:hover { color: rgba(255,255,255,0.8); }
+.cat-arrow { font-size: 8px; transition: 0.2s; display: inline-block; width: 10px; text-align: center; }
+.category-container.collapsed .cat-arrow { transform: rotate(-90deg); }
+.category-container.collapsed .category-rooms { display: none; }
+.category-rooms { display: flex; flex-direction: column; gap: 2px; min-height: 5px; }
+
+/* Элемент комнаты */
+.room-item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    background: transparent; border: none; padding: 8px 10px;
+    border-radius: 10px; cursor: pointer; transition: 0.2s; text-align: left;
+    color: #888; /* Серый текст неактивных чатов */
+}
+.room-item:hover { background: rgba(255,255,255,0.03); color: #ddd; }
+
+/* DnD */
+.room-item[draggable="true"] { cursor: grab; }
+.room-item:active { cursor: grabbing; }
+
+.room-avatar {
+    width: 32px; height: 32px; border-radius: 10px;
+    background-size: cover; background-position: center; background-color: #222;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #888; font-weight: 700; flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.room-info { display: flex; flex-direction: column; overflow: hidden; flex: 1; pointer-events: none; }
+.room-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.2s; }
+.room-meta { font-size: 10px; color: #555; white-space: nowrap; }
 
 /* Меню создания */
 .rooms-divider { display: flex; justify-content: space-between; align-items: center; padding: 0 5px 8px 5px; font-size: 10px; font-weight: 800; color: #555; letter-spacing: 1px; text-transform: uppercase; }
@@ -28,32 +134,3 @@
 .create-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
 .dropdown-item { padding: 12px 16px; font-size: 13px; font-weight: 600; color: #ccc; cursor: pointer; transition: 0.2s; }
 .dropdown-item:hover { background: rgba(255,255,255,0.05); color: white; }
-
-/* Список комнат */
-.rooms-nav { flex: 1; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 8px; }
-.rooms-nav::-webkit-scrollbar { width: 4px; }
-.rooms-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-
-/* Категории */
-.category-container { display: flex; flex-direction: column; margin-bottom: 2px; border-radius: 12px; transition: 0.2s; }
-.category-container.drag-over { background: rgba(138,43,226, 0.15); box-shadow: inset 0 0 0 2px rgba(138,43,226, 0.3); }
-.category-header { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: 0.2s; }
-.category-header:hover { color: rgba(255,255,255,0.8); }
-.cat-arrow { font-size: 10px; transition: 0.2s; display: inline-block; width: 12px; text-align: center; }
-.category-container.collapsed .cat-arrow { transform: rotate(-90deg); }
-.category-container.collapsed .category-rooms { display: none; }
-.category-rooms { display: flex; flex-direction: column; gap: 2px; min-height: 5px; padding-bottom: 5px; }
-
-/* Элемент комнаты */
-.room-item { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: none; padding: 6px 8px; border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: left; }
-.room-item:hover { background: rgba(255,255,255,0.03); }
-.room-item.active { background: rgba(138,43,226,0.1); position: relative; }
-.room-item.active::before { content:''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; background: var(--primary); border-radius: 0 4px 4px 0; }
-.room-item[draggable="true"] { cursor: grab; }
-.room-item:active { cursor: grabbing; }
-.room-avatar { width: 32px; height: 32px; border-radius: 10px; background-size: cover; background-position: center; background-color: #222; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #888; font-weight: 700; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.05); }
-.room-info { display: flex; flex-direction: column; overflow: hidden; flex: 1; pointer-events: none; }
-.room-name { font-size: 13px; font-weight: 600; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.room-meta { font-size: 10px; color: #666; white-space: nowrap; }
-/* DnD Placeholder */
-.dnd-placeholder { height: 44px; margin: 2px 0; border: 2px dashed rgba(138,43,226,0.5); border-radius: 12px; background: rgba(138,43,226,0.1); }
