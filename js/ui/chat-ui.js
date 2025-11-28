@@ -36,7 +36,7 @@ export class ChatUI {
             titleEl.style.opacity = 1;
         }, 200);
 
-        this.container.innerHTML = '<div style="text-align:center; padding:20px; color:#555;">Загрузка...</div>';
+        this.container.innerHTML = '<div style="text-align:center; padding:20px; color:#555;">Загрузка сообщений...</div>';
         
         if (this.unsubscribe) this.unsubscribe();
 
