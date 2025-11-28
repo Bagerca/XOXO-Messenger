@@ -8,11 +8,21 @@ export class ChatList {
         
         this.localRooms = [];
         this.localCategories = [];
+        
+        // Хранилище свернутых категорий
         this.collapsedCategories = new Set();
+        
+        // Для отслеживания новых сообщений (чтобы не орать при F5)
+        this.roomsState = {}; 
+        this.isInitialLoad = true; // Флаг первой загрузки
+
         this.draggedType = null; 
         this.draggedId = null;   
 
-        // Слушаем событие входа в комнату, чтобы убрать уведомление
+        // Запрашиваем разрешение на уведомления сразу
+        this.requestNotificationPermission();
+
+        // Слушаем вход в комнату -> помечаем прочитанным
         document.addEventListener('room-selected', (e) => {
             this.markAsRead(e.detail.id);
         });
@@ -25,19 +35,72 @@ export class ChatList {
 
         ChatService.subscribeToRooms((rooms) => {
             this.localRooms = rooms;
+            this.checkNewMessages(); // Проверяем на новые сообщения
             this.render();
+            this.isInitialLoad = false; // Первая загрузка прошла
         });
 
         this.initRootDropZone();
     }
 
-    // Метод: Пометить как прочитанное
+    // --- УВЕДОМЛЕНИЯ ---
+    requestNotificationPermission() {
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+    }
+
+    sendSystemNotification(title, body, icon) {
+        if (Notification.permission === "granted") {
+            const notif = new Notification(title, {
+                body: body,
+                icon: icon || "logo.svg", // Твой логотип
+                silent: false
+            });
+            
+            // При клике на уведомление открываем окно браузера
+            notif.onclick = () => {
+                window.focus();
+                notif.close();
+            };
+        }
+    }
+
+    checkNewMessages() {
+        this.localRooms.forEach(room => {
+            const prevTime = this.roomsState[room.id] || 0;
+            const newTime = room.lastMessageAt || 0;
+            const isActive = this.chatUI.currentRoomId === room.id;
+
+            // Если время изменилось И это не первая загрузка И мы не в этом чате
+            if (newTime > prevTime && !this.isInitialLoad && !isActive) {
+                
+                // Проверяем, что сообщение не от нас самих (опционально)
+                // Но у нас в списке комнат нет инфы о последнем авторе, 
+                // поэтому уведомляем о факте изменения.
+                
+                this.sendSystemNotification(
+                    `Сообщение в ${room.name}`, 
+                    "Новое сообщение", 
+                    room.avatar || "logo.svg"
+                );
+                
+                // Звук (опционально, можно добавить mp3 файл)
+                // const audio = new Audio('sound.mp3'); audio.play();
+            }
+
+            // Обновляем состояние
+            this.roomsState[room.id] = newTime;
+        });
+    }
+
+    // --- ПРОЧИТАННОСТЬ ---
     markAsRead(roomId) {
         localStorage.setItem(`xoxo_lastRead_${roomId}`, Date.now());
-        // Перерисовываем UI (можно оптимизировать и менять только класс, но render надежнее)
         this.render(); 
     }
 
+    // --- РЕНДЕРИНГ (Остается прежним с небольшими правками для бейджа) ---
     render() {
         const scrollPos = this.container.scrollTop;
         this.container.innerHTML = '';
@@ -84,13 +147,13 @@ export class ChatList {
         const isActive = this.chatUI.currentRoomId === room.id;
         if (isActive) {
             btn.classList.add('active');
-            // Если мы уже в этом чате, обновляем прочитанность "на лету"
             localStorage.setItem(`xoxo_lastRead_${room.id}`, Date.now());
         }
 
-        // --- ЛОГИКА УВЕДОМЛЕНИЙ ---
+        // Логика зеленого кружка
         const lastRead = localStorage.getItem(`xoxo_lastRead_${room.id}`) || 0;
         const lastMsg = room.lastMessageAt || 0;
+        // Показываем кружок, если есть новое сообщение И мы не в чате
         const hasUnread = !isActive && (lastMsg > lastRead);
 
         let avatarHtml = `<div class="room-avatar">#</div>`;
@@ -98,7 +161,6 @@ export class ChatList {
             avatarHtml = `<div class="room-avatar" style="background-image: url('${room.avatar}')"></div>`;
         }
 
-        // Добавляем бейдж если есть непрочитанные
         const badgeHtml = hasUnread ? `<div class="unread-badge"></div>` : '';
 
         btn.innerHTML = `
@@ -112,14 +174,14 @@ export class ChatList {
         
         btn.addEventListener('click', (e) => {
             e.stopPropagation(); 
-            // Сразу убираем бейдж визуально для мгновенного отклика
+            // Убираем бейдж визуально сразу
             const badge = btn.querySelector('.unread-badge');
             if(badge) badge.remove();
             
             document.dispatchEvent(new CustomEvent('room-selected', { detail: room }));
         });
 
-        // Drag Events
+        // Drag handlers
         btn.addEventListener('dragstart', (e) => {
             e.stopPropagation();
             this.draggedType = 'room';
@@ -167,7 +229,7 @@ export class ChatList {
         catContainer.appendChild(header);
         catContainer.appendChild(roomsContainer);
 
-        // Drag & Drop logic (без изменений)
+        // Drag & Drop logic for Categories
         catContainer.addEventListener('dragstart', (e) => {
             if (this.draggedType === 'room') return; 
             this.draggedType = 'category';
@@ -201,6 +263,7 @@ export class ChatList {
 
         catContainer.addEventListener('drop', async (e) => {
             e.preventDefault(); e.stopPropagation();
+            const isAbove = catContainer.classList.contains('drop-above');
             this.clearVisuals(catContainer);
             if (!this.draggedId) return;
 
@@ -211,6 +274,7 @@ export class ChatList {
                 }
             } else if (this.draggedType === 'category' && this.draggedId !== cat.id) {
                 const srcCat = this.localCategories.find(c => c.id === this.draggedId);
+                // Простая смена order (Swap)
                 const srcOrder = srcCat.order;
                 const targetOrder = cat.order;
                 await ChatService.updateCategory(srcCat.id, { order: targetOrder });
