@@ -3,6 +3,7 @@ import { ChatService } from "./services/database.js";
 import { ChatArea } from "./modules/ChatArea.js";
 import { ChatList } from "./modules/ChatList.js";
 import { ProfileManager } from "./modules/Profile.js";
+import { RightSidebar } from "./modules/RightSidebar.js"; // НОВОЕ: Импорт
 
 // State
 let currentUser = null;
@@ -10,6 +11,7 @@ let currentProfile = null;
 let chatArea = null;
 let chatList = null;
 let profileManager = null;
+let rightSidebar = null; // НОВОЕ: Переменная
 
 // Modals for creation
 const btnCreateMenu = document.getElementById('btn-create-menu');
@@ -30,6 +32,9 @@ AuthService.monitor(async (user) => {
     chatArea = new ChatArea(user, currentProfile);
     chatList = new ChatList(user, chatArea, document.getElementById('rooms-list-container'));
     profileManager = new ProfileManager(user, currentProfile);
+    
+    // НОВОЕ: Инициализация правой панели
+    rightSidebar = new RightSidebar(user); 
 
     // 2. Начальный вход
     enterRoom("general", "Общий холл", "Открытый чат");
@@ -76,7 +81,7 @@ function performEnter(id, name, desc, ownerId) {
 document.getElementById('btn-home').addEventListener('click', () => enterRoom("general", "Общий холл", "Открытый чат"));
 document.getElementById('btn-saved').addEventListener('click', () => enterRoom(currentUser.uid, "Избранное", "Личные заметки"));
 
-// Menu & Modals Logic (Keep it here or move to a separate UIHelper)
+// Menu & Modals Logic
 btnCreateMenu.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('open'); });
 document.addEventListener('click', () => dropdown.classList.remove('open'));
 
