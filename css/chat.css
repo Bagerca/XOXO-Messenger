@@ -171,3 +171,22 @@
     transition: 0.2s;
 }
 .editor-send-btn:hover { transform: scale(1.05); }
+
+/* Стиль для закрепленного сообщения */
+.bubble.pinned {
+    border: 1px solid #ffd700 !important; /* Золотая рамка */
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+    position: relative;
+}
+
+/* Иконка скрепки внутри сообщения */
+.bubble.pinned::after {
+    content: '📌';
+    position: absolute;
+    top: -8px;
+    right: -5px;
+    font-size: 12px;
+    background: #151525;
+    border-radius: 50%;
+    padding: 2px;
+}
