@@ -1,14 +1,14 @@
 /* --- css/chat-window.css --- */
 
-/* Глобальная структура */
+/* 1. Глобальная структура */
 .chat-wrapper {
-    flex: 1;
     display: flex;
     flex-direction: column;
+    height: 100%;       /* Важно для наследования высоты */
+    width: 100%;
     background: rgba(5, 5, 17, 0.6);
     position: relative;
-    overflow: hidden;
-    width: 100%;
+    overflow: hidden; 
 }
 
 .chat-header {
@@ -35,48 +35,51 @@
 .room-desc { font-size: 12px; color: #888; }
 
 
-/* --- ОКНО ЧАТА (ОСНОВНОЙ ФИКС) --- */
+/* 2. ОКНО ЧАТА - ИСПРАВЛЕНИЕ КОНТЕЙНЕРА */
 #chat-window {
-    flex: 1;
+    /* Занимает всё доступное место, но не больше */
+    flex: 1 1 auto; 
+    
+    /* Критически важно для скролла внутри flex-элемента */
+    min-height: 0; 
+    
+    /* Возвращаем Flex, но с правильными настройками */
+    display: flex;
+    flex-direction: column;
+    
+    /* !!! САМОЕ ВАЖНОЕ !!! 
+       Прижимает элементы к началу (верху). 
+       Без этого они могут растягиваться (space-between/stretch). */
+    justify-content: flex-start !important;
+    
     padding: 20px 0;
-    
-    /* ВКЛЮЧАЕМ BLOCK ВМЕСТО FLEX */
-    /* Это "ядерное решение": элементы в block-контейнере
-       никогда не растягиваются на всю высоту экрана */
-    display: block !important; 
-    
     overflow-y: auto;
     overflow-x: hidden;
+    gap: 8px; /* Отступы между сообщениями */
 }
 
-/* --- СТРОКА СООБЩЕНИЯ --- */
-.message-row {
-    /* Сама строка остается flex, чтобы выровнять аватар и текст */
+/* 3. СТРОКА СООБЩЕНИЯ - ИСПРАВЛЕНИЕ ЭЛЕМЕНТА */
+/* Используем ID (#chat-window), чтобы перебить любые другие стили */
+#chat-window .message-row {
     display: flex;
-    align-items: flex-end; /* Прижимаем аватарку к низу строки */
-    
     width: 100%;
     padding: 0 24px;
     box-sizing: border-box;
     position: relative;
     
-    /* Сбрасываем любые попытки растягивания */
+    /* !!! ЯДЕРНЫЙ СБРОС РАЗМЕРОВ !!! */
+    flex: 0 0 auto !important; /* grow: 0, shrink: 0, basis: auto */
     height: auto !important;
     min-height: 0 !important;
-    flex: none !important;
-    
-    /* Отступ вместо gap, так как у родителя теперь display: block */
-    margin-bottom: 8px;
+    margin-bottom: 0 !important; /* Управляется через gap родителя */
 }
 
-/* При наведении показываем кнопки действий */
+/* При наведении */
 .message-row:hover .msg-actions { opacity: 1; visibility: visible; transform: translateY(0); }
-
-/* Отступ для начала группы сообщений */
 .message-row.group-start { margin-top: 16px; }
 
 
-/* --- АВАТАРКА --- */
+/* 4. ВНУТРЕННОСТИ СООБЩЕНИЯ */
 .avatar-column {
     width: 42px;
     display: flex;
@@ -91,19 +94,18 @@
     background-size: cover;
     background-position: center;
     background-color: #333;
-    display: none; /* Скрыт по умолчанию */
+    display: none;
 }
-/* Показываем аватар только у последнего сообщения в группе */
 .message-row.group-end .msg-avatar { display: block; }
 
-
-/* --- ОБЕРТКА ПУЗЫРЯ --- */
 .msg-content-wrapper {
     display: flex;
     flex-direction: column;
     max-width: 65%;
     position: relative;
-    height: auto !important;
+    /* Запрещаем обертке растягиваться */
+    height: auto !important; 
+    flex: 0 1 auto;
 }
 
 .msg-sender-name {
@@ -111,37 +113,29 @@
     margin-bottom: 4px; margin-left: 2px;
 }
 
-
-/* --- ПУЗЫРЬ С ТЕКСТОМ --- */
+/* ПУЗЫРЬ */
 .msg-bubble {
     padding: 10px 16px;
     font-size: 15px;
     line-height: 1.5;
     color: #eee;
-    
     word-wrap: break-word;
     word-break: break-word; 
     white-space: pre-wrap;
-    
     position: relative;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     
-    /* Размеры строго по контенту */
-    width: fit-content; 
+    /* Размеры */
+    width: fit-content;
     height: auto !important;
 }
 
 .msg-time-inline {
-    float: right; 
-    font-size: 10px; 
-    color: rgba(255,255,255,0.5);
-    margin-left: 10px; 
-    margin-top: 6px; 
-    user-select: none; 
-    line-height: 1;
+    float: right; font-size: 10px; color: rgba(255,255,255,0.5);
+    margin-left: 10px; margin-top: 6px; user-select: none; line-height: 1;
 }
 
-/* --- СТИЛИ: СЛЕВА (Чужие) --- */
+/* СТИЛИ СЛЕВА/СПРАВА */
 .message-row.left { justify-content: flex-start; }
 .message-row.left .msg-content-wrapper { align-items: flex-start; }
 .message-row.left .msg-bubble {
@@ -152,8 +146,6 @@
 .message-row.left.group-start .msg-bubble { border-top-left-radius: 18px; }
 .message-row.left.group-end .msg-bubble { border-bottom-left-radius: 4px; }
 
-
-/* --- СТИЛИ: СПРАВА (Свои) --- */
 .message-row.right { flex-direction: row-reverse; }
 .message-row.right .avatar-column { display: none; }
 .message-row.right .msg-content-wrapper { align-items: flex-end; }
@@ -166,8 +158,7 @@
 .message-row.right.group-start .msg-bubble { border-top-right-radius: 18px; }
 .message-row.right.group-end .msg-bubble { border-bottom-right-radius: 4px; }
 
-
-/* --- ВЛОЖЕНИЯ И ДЕЙСТВИЯ --- */
+/* ВЛОЖЕНИЯ И ДЕЙСТВИЯ */
 .reply-attachment {
     background: rgba(0,0,0,0.2); padding: 6px 10px; margin-bottom: 6px;
     border-radius: 6px; border-left: 2px solid #00f2ff; cursor: pointer;
@@ -191,7 +182,7 @@
 .reaction-pill { background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 10px; font-size: 11px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 4px; }
 .reaction-pill.active { border-color: #8A2BE2; background: rgba(138,43,226,0.2); }
 
-/* --- ПОЛЕ ВВОДА --- */
+/* ПОЛЕ ВВОДА */
 .input-container {
     padding: 24px;
     background: linear-gradient(to top, rgba(5,5,17,1) 20%, rgba(5,5,17,0));
