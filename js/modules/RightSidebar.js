@@ -30,18 +30,16 @@ export class RightSidebar {
     async loadRoom(room) {
         this.currentRoom = room;
         
-        // Значения по умолчанию
         let displayName = room.name;
         let displayAvatar = room.avatar;
         let typeText = room.type === 'private' ? 'Закрытая группа' : 'Публичная группа';
 
-        // --- ЛОГИКА ДЛЯ DM ---
+        // ЛОГИКА ДЛЯ DM
         if (room.type === 'dm') {
             typeText = 'Личная переписка';
             const otherId = room.members.find(uid => uid !== this.currentUser.uid);
             
             if (otherId) {
-                // Пытаемся получить данные
                 const otherUser = await ChatService.getUser(otherId);
                 if (otherUser) {
                     displayName = otherUser.nickname;
@@ -57,7 +55,6 @@ export class RightSidebar {
              displayName = "Общий холл";
         }
 
-        // Рендер
         this.roomName.innerText = displayName;
         this.roomType.innerText = typeText;
         
@@ -70,7 +67,6 @@ export class RightSidebar {
         }
 
         // Участники
-        // Если DM или General - логика немного отличается
         if (room.id === 'general' || !room.members) {
             this.loadAllUsers();
         } else {
@@ -126,18 +122,14 @@ export class RightSidebar {
                 <div class="shader-icon" title="Shader: ${user.effect}">${effectIcon}</div>
             `;
             
-            // Клик по карточке открывает личку (DM)
             card.style.cursor = "pointer";
             card.addEventListener('click', async () => {
                 if (user.uid === this.currentUser.uid) return;
-                
                 card.style.opacity = "0.5";
                 try {
                     const dmRoom = await ChatService.getOrCreateDirectChat(this.currentUser.uid, user.uid);
-                    // Передаем виртуальные данные, чтобы UI сразу обновился
                     dmRoom.virtualName = user.nickname;
                     dmRoom.virtualAvatar = user.avatar;
-                    
                     document.dispatchEvent(new CustomEvent('room-selected', { detail: dmRoom }));
                     if (window.innerWidth < 1000) this.el.classList.add('closed');
                 } catch (e) {
@@ -154,6 +146,8 @@ export class RightSidebar {
     renderMedia(messages) {
         this.mediaGrid.innerHTML = '';
         const images = [];
+        
+        // Парсим картинки
         messages.forEach(msg => {
             if (msg.text && msg.text.includes('<img')) {
                 const temp = document.createElement('div');
@@ -168,14 +162,19 @@ export class RightSidebar {
             return;
         }
 
+        // Показываем последние 9
         [...images].reverse().slice(0, 9).forEach(src => {
             const el = document.createElement('div');
             el.className = 'rs-media-item';
             el.style.backgroundImage = `url('${src}')`;
+            
+            // НОВОЕ: Вместо window.open отправляем событие
             el.onclick = () => {
-                const w = window.open("");
-                w.document.write(`<body style="background:#000; margin:0; display:flex; justify-content:center; align-items:center; height:100vh;"><img src="${src}" style="max-height:90vh; max-width:90vw;"></body>`);
+                document.dispatchEvent(new CustomEvent('request-lightbox', { 
+                    detail: { src: src } 
+                }));
             };
+            
             this.mediaGrid.appendChild(el);
         });
     }
