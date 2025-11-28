@@ -9,11 +9,9 @@ export class ChatList {
         this.localRooms = [];
         this.localCategories = [];
         
-        // Drag State
-        this.draggedType = null; // 'room' | 'category'
-        this.draggedId = null;   // ID перемещаемого элемента
+        this.draggedType = null; 
+        this.draggedId = null;   
 
-        // Подписка на данные
         ChatService.subscribeToCategories((cats) => {
             this.localCategories = cats;
             this.render();
@@ -29,46 +27,35 @@ export class ChatList {
     }
 
     render() {
-        // Сохраняем скролл, если был (чтобы не прыгало при ререндере)
         const scrollPos = this.container.scrollTop;
         this.container.innerHTML = '';
         
-        // 1. Сортировка чатов
         const rootRooms = [];
         const roomsByCat = {};
         this.localCategories.forEach(c => roomsByCat[c.id] = []);
 
         this.localRooms.forEach(room => {
             if (room.id === 'general') return; 
-
-            // Приватность
             const isMember = room.members && room.members.includes(this.currentUser.uid);
             const isOwner = room.ownerId === this.currentUser.uid;
             if (room.type === 'private' && !isMember && !isOwner) return;
 
-            // Распределение
-            const catId = room.categoryId;
+            const catId = room.categoryId && roomsByCat[room.categoryId] ? room.categoryId : 'uncategorized';
             
-            // Если категория существует, кладем туда
-            if (catId && roomsByCat[catId]) {
-                roomsByCat[catId].push(room);
-            } else {
-                // Иначе (root, uncategorized или удаленная категория) -> в корень
+            if (catId === 'uncategorized' && (!room.categoryId || room.categoryId === 'root' || room.categoryId === 'uncategorized')) {
                 rootRooms.push(room);
+            } else {
+                roomsByCat[catId].push(room);
             }
         });
 
-        // 2. Рендер Рутовых чатов (Вне категорий)
         if (rootRooms.length > 0) {
             const rootContainer = document.createElement('div');
             rootContainer.className = 'root-rooms-list';
-            rootRooms.forEach(room => {
-                rootContainer.appendChild(this.createRoomElement(room));
-            });
+            rootRooms.forEach(room => rootContainer.appendChild(this.createRoomElement(room)));
             this.container.appendChild(rootContainer);
         }
 
-        // 3. Рендер Категорий
         this.localCategories.forEach(cat => {
             this.renderCategoryBlock(cat, roomsByCat[cat.id]);
         });
@@ -98,17 +85,17 @@ export class ChatList {
         `;
         
         btn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Чтобы клик по чату не сворачивал категорию случайно
+            e.stopPropagation(); 
             document.dispatchEvent(new CustomEvent('room-selected', { detail: room }));
         });
 
-        // --- Drag Room ---
         btn.addEventListener('dragstart', (e) => {
             e.stopPropagation();
             this.draggedType = 'room';
             this.draggedId = room.id;
             e.dataTransfer.effectAllowed = "move";
             e.target.style.opacity = '0.5';
+            this.container.classList.add('dragging-room');
         });
 
         btn.addEventListener('dragend', (e) => {
@@ -123,20 +110,13 @@ export class ChatList {
         const catContainer = document.createElement('div');
         catContainer.className = 'category-container';
         catContainer.dataset.catId = cat.id;
-        // ДЕЛАЕМ КАТЕГОРИЮ ПЕРЕТАСКИВАЕМОЙ
         catContainer.draggable = true; 
 
-        // Заголовок
         const header = document.createElement('div');
         header.className = 'category-header';
         header.innerHTML = `<span class="cat-arrow">▼</span> ${cat.name}`;
+        header.addEventListener('click', () => catContainer.classList.toggle('collapsed'));
         
-        // Сворачивание при клике на стрелку или текст
-        header.addEventListener('click', (e) => {
-            catContainer.classList.toggle('collapsed');
-        });
-
-        // Контейнер для комнат внутри категории
         const roomsContainer = document.createElement('div');
         roomsContainer.className = 'category-rooms';
         rooms.forEach(room => roomsContainer.appendChild(this.createRoomElement(room)));
@@ -144,15 +124,16 @@ export class ChatList {
         catContainer.appendChild(header);
         catContainer.appendChild(roomsContainer);
 
-        // --- Drag Category Events ---
+        // --- DRAG CATEGORY START ---
         catContainer.addEventListener('dragstart', (e) => {
-            // Если тащим именно категорию (а не чат внутри неё, который всплыл событием)
-            if (this.draggedType === 'room') return; // Если уже тащим комнату, категорию не трогаем
+            if (this.draggedType === 'room') return; 
 
             this.draggedType = 'category';
             this.draggedId = cat.id;
             e.dataTransfer.effectAllowed = "move";
-            catContainer.classList.add('dragging');
+            
+            // Небольшая задержка для визуального эффекта
+            setTimeout(() => catContainer.classList.add('dragging'), 0);
             e.stopPropagation();
         });
 
@@ -161,50 +142,63 @@ export class ChatList {
             this.clearDragState();
         });
 
-        // --- Drop Zone Logic (Принимает и комнаты, и другие категории) ---
+        // --- DROP ZONE LOGIC ---
         catContainer.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.stopPropagation();
 
             if (this.draggedType === 'room') {
-                // Если тащим комнату -> показываем подсветку "вставить внутрь"
                 catContainer.classList.add('drag-over-insert');
-            } else if (this.draggedType === 'category' && this.draggedId !== cat.id) {
-                // Если тащим другую категорию -> подсветка "поменять местами"
-                catContainer.classList.add('drag-over-swap');
+            } 
+            else if (this.draggedType === 'category' && this.draggedId !== cat.id) {
+                // Вычисляем позицию мыши относительно высоты элемента
+                const rect = catContainer.getBoundingClientRect();
+                const offset = e.clientY - rect.top;
+                
+                // Если мышь в верхней половине - линия сверху, иначе снизу
+                if (offset < rect.height / 2) {
+                    catContainer.classList.add('drop-above');
+                    catContainer.classList.remove('drop-below');
+                } else {
+                    catContainer.classList.add('drop-below');
+                    catContainer.classList.remove('drop-above');
+                }
             }
         });
 
         catContainer.addEventListener('dragleave', () => {
             catContainer.classList.remove('drag-over-insert');
-            catContainer.classList.remove('drag-over-swap');
+            catContainer.classList.remove('drop-above');
+            catContainer.classList.remove('drop-below');
         });
 
         catContainer.addEventListener('drop', async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            catContainer.classList.remove('drag-over-insert');
-            catContainer.classList.remove('drag-over-swap');
+            
+            // Очистка классов
+            const dropAbove = catContainer.classList.contains('drop-above');
+            this.clearVisuals(catContainer);
 
             if (!this.draggedId) return;
 
-            // 1. Бросили КОМНАТУ в категорию
+            // 1. Бросили ЧАТ -> Вставляем в категорию
             if (this.draggedType === 'room') {
                 const room = this.localRooms.find(r => r.id === this.draggedId);
                 if (room && room.categoryId !== cat.id) {
                     await ChatService.updateRoom(this.draggedId, { categoryId: cat.id });
                 }
             }
-            // 2. Бросили КАТЕГОРИЮ на категорию (Меняем местами порядок)
+            // 2. Бросили КАТЕГОРИЮ -> Меняем порядок
             else if (this.draggedType === 'category' && this.draggedId !== cat.id) {
+                // Для простоты реализации делаем Swap (обмен местами)
+                // В полноценном приложении тут нужно пересчитывать индексы order
                 const srcCat = this.localCategories.find(c => c.id === this.draggedId);
                 const targetCat = cat;
                 
-                // Простой обмен order
                 const srcOrder = srcCat.order;
                 const targetOrder = targetCat.order;
 
-                // Обновляем обе категории
                 await ChatService.updateCategory(srcCat.id, { order: targetOrder });
                 await ChatService.updateCategory(targetCat.id, { order: srcOrder });
             }
@@ -213,14 +207,10 @@ export class ChatList {
         this.container.appendChild(catContainer);
     }
 
-    // --- Root Drop Zone (Пустое место в списке) ---
     initRootDropZone() {
         this.container.addEventListener('dragover', (e) => {
             e.preventDefault();
-            
-            // Реагируем только если тащим КОМНАТУ (категории в рут не кидаем, они и так там)
             if (this.draggedType === 'room') {
-                // Проверяем, что мы не над категорией
                 if (!e.target.closest('.category-container')) {
                     this.container.classList.add('drag-over-root');
                 }
@@ -235,9 +225,7 @@ export class ChatList {
             e.preventDefault();
             this.container.classList.remove('drag-over-root');
 
-            // Если бросили КОМНАТУ в пустоту -> делаем её рутовой ('root')
             if (this.draggedType === 'room' && this.draggedId) {
-                // Убедимся, что мы не попали случайно на категорию при всплытии
                 if (!e.target.closest('.category-container')) {
                     const room = this.localRooms.find(r => r.id === this.draggedId);
                     if (room && room.categoryId !== 'root') {
@@ -248,12 +236,17 @@ export class ChatList {
         });
     }
 
+    clearVisuals(el) {
+        el.classList.remove('drag-over-insert');
+        el.classList.remove('drop-above');
+        el.classList.remove('drop-below');
+    }
+
     clearDragState() {
         this.draggedType = null;
         this.draggedId = null;
-        document.querySelectorAll('.drag-over-insert, .drag-over-swap, .drag-over-root').forEach(el => {
-            el.classList.remove('drag-over-insert', 'drag-over-swap', 'drag-over-root');
-        });
+        this.container.classList.remove('dragging-room');
+        document.querySelectorAll('.category-container').forEach(el => this.clearVisuals(el));
     }
 
     updateCategorySelect() {
