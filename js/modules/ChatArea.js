@@ -6,6 +6,7 @@ export class ChatArea {
         this.profile = profile;
         this.container = document.getElementById("chat-messages-area");
         
+        // Editor
         this.richInput = document.getElementById("rich-input");
         this.sendBtn = document.getElementById("send-btn");
         this.fileInput = document.getElementById("editor-file-input");
@@ -16,7 +17,7 @@ export class ChatArea {
         this.titleEl = document.getElementById("room-title");
         this.descEl = document.getElementById("room-desc");
         
-        // Pinned Elements
+        // Pinned
         this.pinnedBar = document.getElementById("pinned-messages-bar");
         this.pinnedPreview = document.getElementById("pinned-msg-preview");
         this.pinnedContentBox = document.getElementById("pinned-content-text");
@@ -29,11 +30,23 @@ export class ChatArea {
         this.forwardModal = document.getElementById("forward-modal");
         this.forwardList = document.getElementById("forward-list");
         
+        // LIGHTBOX ELEMENTS
+        this.lb = document.getElementById("media-lightbox");
+        this.lbImg = document.getElementById("lb-img");
+        this.lbSender = document.getElementById("lb-sender");
+        this.lbTime = document.getElementById("lb-time");
+        this.lbCaption = document.getElementById("lb-caption");
+        
         this.targetMsgData = null;
         this.currentRoomId = "general";
         
+        // Gallery State
+        this.galleryImages = []; // Список всех картинок в чате
+        this.currentImageIndex = 0;
+
         this.setupListeners();
         this.initContextMenu();
+        this.initLightbox(); // Инициализация лайтбокса
     }
 
     setupListeners() {
@@ -60,7 +73,6 @@ export class ChatArea {
         document.getElementById('btn-save-edit-msg').addEventListener('click', () => this.saveEditedMessage());
         document.getElementById('btn-cancel-forward').addEventListener('click', () => this.forwardModal.classList.remove('open'));
         
-        // Unpin
         this.btnUnpinCurrent.addEventListener('click', async (e) => {
             e.stopPropagation();
             if(this.currentPinnedMsgId) {
@@ -68,7 +80,6 @@ export class ChatArea {
             }
         });
         
-        // Scroll to Pinned
         this.pinnedContentBox.addEventListener('click', () => {
             if(this.currentPinnedMsgId) {
                 const el = document.getElementById(`msg-${this.currentPinnedMsgId}`);
@@ -81,6 +92,67 @@ export class ChatArea {
         });
     }
 
+    initLightbox() {
+        // Кнопки управления
+        document.getElementById('lb-close').onclick = () => this.closeLightbox();
+        document.querySelector('.lightbox-overlay').onclick = () => this.closeLightbox();
+        
+        document.getElementById('lb-prev').onclick = (e) => { e.stopPropagation(); this.changeImage(-1); };
+        document.getElementById('lb-next').onclick = (e) => { e.stopPropagation(); this.changeImage(1); };
+
+        // Клавиатура
+        document.addEventListener('keydown', (e) => {
+            if (!this.lb.classList.contains('active')) return;
+            if (e.key === "Escape") this.closeLightbox();
+            if (e.key === "ArrowLeft") this.changeImage(-1);
+            if (e.key === "ArrowRight") this.changeImage(1);
+        });
+    }
+
+    openLightbox(index) {
+        if(index < 0 || index >= this.galleryImages.length) return;
+        this.currentImageIndex = index;
+        this.updateLightboxUI();
+        this.lb.classList.add('active');
+    }
+
+    closeLightbox() {
+        this.lb.classList.remove('active');
+    }
+
+    changeImage(step) {
+        let newIndex = this.currentImageIndex + step;
+        // Зацикливание (опционально) или остановка
+        if (newIndex < 0) newIndex = this.galleryImages.length - 1;
+        if (newIndex >= this.galleryImages.length) newIndex = 0;
+        
+        this.currentImageIndex = newIndex;
+        this.updateLightboxUI();
+    }
+
+    updateLightboxUI() {
+        const data = this.galleryImages[this.currentImageIndex];
+        if(!data) return;
+
+        // Анимация смены (сброс)
+        this.lbImg.style.opacity = 0.5;
+        setTimeout(() => this.lbImg.style.opacity = 1, 150);
+
+        this.lbImg.src = data.src;
+        this.lbSender.innerText = data.sender;
+        this.lbTime.innerText = new Date(data.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        // Очищаем текст от HTML тегов и самой картинки для подписи
+        const temp = document.createElement('div');
+        temp.innerHTML = data.rawText;
+        // Удаляем все картинки из темпового дива, чтобы показать только текст
+        temp.querySelectorAll('img').forEach(img => img.remove());
+        const textOnly = temp.innerText.trim();
+        
+        this.lbCaption.innerText = textOnly || ""; // Если текста нет, пусто
+    }
+
+    // --- CONTEXT MENU & ACTIONS (Оставляем без изменений логику) ---
     initContextMenu() {
         document.addEventListener('click', () => this.hideContextMenu());
         document.addEventListener('contextmenu', (e) => {
@@ -93,7 +165,6 @@ export class ChatArea {
             const msgData = JSON.parse(decodeURIComponent(row.dataset.msg));
             this.showContextMenu(e, msgData);
         });
-
         document.getElementById('ctx-msg-copy').onclick = () => this.handleAction('copy');
         document.getElementById('ctx-msg-pin').onclick = () => this.handleAction('pin');
         document.getElementById('ctx-msg-edit').onclick = () => this.handleAction('edit');
@@ -105,19 +176,13 @@ export class ChatArea {
     showContextMenu(e, msgData) {
         this.targetMsgData = msgData;
         const isMe = msgData.senderEmail === this.currentUser.email;
-
         const setDisplay = (id, show) => document.getElementById(id).style.display = show ? 'flex' : 'none';
-        
         setDisplay('ctx-msg-edit', isMe);
         setDisplay('ctx-msg-delete', isMe);
-        
         const pinText = msgData.isPinned ? 'Открепить' : 'Закрепить';
         document.getElementById('ctx-msg-pin').lastChild.textContent = ` ${pinText}`;
-
         this.ctxMenu.style.display = 'flex';
-        
-        let x = e.clientX;
-        let y = e.clientY;
+        let x = e.clientX, y = e.clientY;
         const menuW = this.ctxMenu.offsetWidth || 180;
         const menuH = this.ctxMenu.offsetHeight || 200;
         if (x + menuW > window.innerWidth) x -= menuW;
@@ -135,7 +200,6 @@ export class ChatArea {
     async handleAction(action) {
         if (!this.targetMsgData) return;
         const { id, text, isPinned } = this.targetMsgData;
-
         switch (action) {
             case 'copy':
                 const tempDiv = document.createElement("div");
@@ -167,14 +231,12 @@ export class ChatArea {
     async openForwardModal(msgContent) {
         this.forwardModal.classList.add('open');
         this.forwardList.innerHTML = '<div style="text-align:center; color:#777;">Загрузка чатов...</div>';
-        
         const rooms = await ChatService.getMyRooms(this.currentUser.uid);
         this.forwardList.innerHTML = '';
         if(rooms.length === 0) {
              this.forwardList.innerHTML = '<div style="text-align:center;">Нет доступных чатов</div>';
              return;
         }
-
         rooms.forEach(room => {
             if(room.id === this.currentRoomId) return;
             const div = document.createElement('div');
@@ -229,7 +291,8 @@ export class ChatArea {
 
     renderMessages(messages) {
         this.container.innerHTML = "";
-        
+        this.galleryImages = []; // Сброс галереи
+
         const pinnedMsg = [...messages].reverse().find(m => m.isPinned);
         if (pinnedMsg) {
             this.currentPinnedMsgId = pinnedMsg.id;
@@ -273,8 +336,22 @@ export class ChatArea {
             row.innerHTML = html;
             
             row.querySelectorAll('.spoiler').forEach(sp => sp.addEventListener('click', () => sp.classList.toggle('revealed')));
+            
+            // ОБРАБОТКА КАРТИНОК ДЛЯ ЛАЙТБОКСА
             row.querySelectorAll('img').forEach(img => {
-                if(!img.closest('.avatar')) img.onclick = () => { window.open("").document.write(`<img src="${img.src}" style="max-width:100%">`); };
+                if(!img.closest('.avatar')) {
+                    // Добавляем в глобальную галерею
+                    const imgIndex = this.galleryImages.length;
+                    this.galleryImages.push({
+                        src: img.src,
+                        sender: msg.sender,
+                        time: msg.createdAt,
+                        rawText: msg.text // Храним полный текст для подписи
+                    });
+
+                    // Клик открывает лайтбокс
+                    img.onclick = () => this.openLightbox(imgIndex);
+                }
             });
 
             this.container.appendChild(row);
