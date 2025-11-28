@@ -90,6 +90,20 @@ export class ChatArea {
                 }
             }
         });
+
+        // НОВОЕ: Слушаем событие от RightSidebar
+        document.addEventListener('request-lightbox', (e) => {
+            const src = e.detail.src;
+            // Ищем эту картинку в текущей галерее чата
+            const idx = this.galleryImages.findIndex(img => img.src === src);
+            if (idx !== -1) {
+                this.openLightbox(idx);
+            } else {
+                // Если вдруг картинки нет в галерее (редкий случай рассинхрона), 
+                // просто ничего не делаем или можно открыть одиночный просмотр (но лучше пока так)
+                console.warn("Image not found in current chat gallery context");
+            }
+        });
     }
 
     // --- LIGHTBOX LOGIC ---
@@ -189,7 +203,6 @@ export class ChatArea {
             row.id = `msg-${msg.id}`;
             row.dataset.msg = encodeURIComponent(JSON.stringify(msg));
 
-            // Форматируем сообщение (текст + сетка картинок)
             const formattedContent = this.formatMessage(msg.text, msg);
 
             const time = new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -211,7 +224,6 @@ export class ChatArea {
             
             row.querySelectorAll('.spoiler').forEach(sp => sp.addEventListener('click', () => sp.classList.toggle('revealed')));
             
-            // Навешиваем клик на элементы сетки
             row.querySelectorAll('.media-item').forEach(item => {
                 item.onclick = (e) => {
                     e.stopPropagation();
@@ -220,7 +232,6 @@ export class ChatArea {
                 };
             });
 
-            // Навешиваем клик на одиночные картинки (если они не попали в сетку)
             row.querySelectorAll('img').forEach(img => {
                 if(!img.closest('.avatar') && !img.closest('.media-item')) {
                     const idx = this.galleryImages.findIndex(x => x.src === img.src);
@@ -234,7 +245,6 @@ export class ChatArea {
         this.container.scrollTop = this.container.scrollHeight;
     }
 
-    // УМНЫЙ ПАРСЕР СООБЩЕНИЙ
     formatMessage(rawHtml, msgObj) {
         const temp = document.createElement('div');
         temp.innerHTML = rawHtml;
@@ -275,7 +285,6 @@ export class ChatArea {
                 const isWhitespace = node.nodeType === 3 && !node.textContent.trim();
                 const isBr = node.nodeName === 'BR';
 
-                // Игнорируем пробелы между картинками, чтобы они слипались
                 if ((isWhitespace || isBr) && imageGroup.length > 0) {
                     return; 
                 }
@@ -416,7 +425,6 @@ export class ChatArea {
         this.editModal.classList.remove('open');
     }
 
-    // --- HELPERS ---
     async sendMessage() {
         const content = this.richInput.innerHTML.trim();
         if (!content || content === '<br>') return;
