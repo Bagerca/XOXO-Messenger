@@ -1,6 +1,5 @@
-/* ============================
-   CHAT AREA
-   ============================ */
+/* --- css/chat.css --- */
+
 .chat-area {
     flex: 1; display: flex; flex-direction: column;
     background: #04040c; 
@@ -41,10 +40,12 @@
 }
 
 .bubble {
-    padding: 12px 16px; border-radius: 18px; max-width: 600px;
+    padding: 12px 16px; border-radius: 18px; 
+    max-width: 600px; min-width: 100px;
     color: #eee; font-size: 15px; line-height: 1.5; word-wrap: break-word;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     position: relative;
+    overflow: hidden;
 }
 .message-row.them .bubble { 
     background: #1e1e2d; 
@@ -56,56 +57,117 @@
     border-radius: 18px 18px 4px 18px; 
 }
 
-/* СТИЛИ ДЛЯ КАРТИНОК В ЧАТЕ */
-.chat-image {
-    max-width: 100%; 
-    max-height: 300px; /* Ограничение по высоте */
-    border-radius: 12px;
-    display: block;
-    cursor: pointer;
-    transition: 0.2s;
-    margin-bottom: 5px; 
-}
-.chat-image:hover { opacity: 0.9; }
-
 .name { font-size: 11px; color: #666; margin-bottom: 4px; font-weight: 700; margin-left: 2px; }
 .message-row.me .name { display: none; }
-.time { font-size: 10px; opacity: 0.5; text-align: right; margin-top: 2px; }
+.time { font-size: 10px; opacity: 0.5; text-align: right; margin-top: 4px; display: block; }
 
-/* INPUT */
-.input-area { padding: 25px; }
-.input-wrapper {
-    background: rgba(255,255,255,0.04); border-radius: 20px;
-    padding: 6px 12px 6px 10px; display: flex; align-items: center; gap: 10px;
-    border: 1px solid var(--border); transition: 0.3s;
-}
-.input-wrapper:focus-within { border-color: var(--primary); background: rgba(255,255,255,0.08); }
-
-.input-wrapper input[type="text"] {
-    flex: 1; background: none; border: none; color: white;
-    outline: none; padding: 12px 0; font-size: 15px;
-}
-
-/* Кнопка скрепки */
-.btn-attach {
-    width: 36px; height: 36px;
-    background: transparent;
-    border: none;
-    color: #888;
+/* --- СТИЛИ ДЛЯ КОНТЕНТА СООБЩЕНИЙ (RICH TEXT) --- */
+.content img {
+    max-width: 100%; 
+    border-radius: 8px;
+    margin: 5px 0;
+    display: block;
     cursor: pointer;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    transition: 0.2s;
 }
-.btn-attach:hover { color: white; background: rgba(255,255,255,0.1); }
+.content b { font-weight: 800; color: #fff; }
+.content i { font-style: italic; opacity: 0.9; }
 
-/* Кнопка отправки */
-#send-btn {
+/* Спойлер */
+.spoiler {
+    background: #000;
+    color: transparent;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 0 4px;
+    transition: 0.3s;
+    user-select: none;
+}
+.spoiler.revealed {
+    background: transparent;
+    color: inherit;
+    user-select: text;
+}
+.spoiler img { filter: blur(10px); transition: 0.3s; }
+.spoiler.revealed img { filter: none; }
+
+
+/* --- РЕДАКТОР (INPUT AREA) --- */
+.input-area { padding: 20px; }
+
+.editor-container {
+    background: rgba(255,255,255,0.04); 
+    border-radius: 16px; 
+    border: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    transition: 0.3s;
+}
+.editor-container:focus-within {
+    border-color: var(--primary);
+    background: rgba(255,255,255,0.07);
+}
+
+/* Панель инструментов */
+.editor-toolbar {
+    display: flex; align-items: center; gap: 5px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid var(--border);
+}
+
+.toolbar-btn {
+    width: 28px; height: 28px;
+    background: transparent; border: none;
+    color: #888; border-radius: 6px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: 0.2s; font-size: 14px;
+}
+.toolbar-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+.toolbar-btn.active { color: var(--primary); background: rgba(138,43,226,0.15); }
+
+.toolbar-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.1); margin: 0 5px; }
+.toolbar-spacer { flex: 1; }
+
+/* Поле ввода */
+.editor-content-wrapper {
+    display: flex; align-items: flex-end;
+    padding: 10px;
+    gap: 10px;
+}
+
+.rich-input {
+    flex: 1;
+    min-height: 24px;
+    max-height: 150px;
+    overflow-y: auto;
+    color: white;
+    outline: none;
+    font-size: 15px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+/* Placeholder hack for contenteditable */
+.rich-input:empty:before {
+    content: attr(placeholder);
+    color: #555;
+    display: block; /* For Firefox */
+}
+
+/* Картинки внутри редактора */
+.rich-input img {
+    max-width: 150px;
+    border-radius: 8px;
+    border: 2px solid var(--primary);
+    display: block; margin: 5px 0;
+}
+
+.editor-send-btn {
     width: 40px; height: 40px; 
     background: var(--primary);
-    border: none; border-radius: 50%; color: white; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    border: none; border-radius: 50%; 
+    color: white; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; 
+    font-size: 18px; flex-shrink: 0;
     transition: 0.2s;
-    flex-shrink: 0;
 }
-#send-btn:hover { transform: scale(1.05); }
+.editor-send-btn:hover { transform: scale(1.05); }
