@@ -1,50 +1,113 @@
-<!-- ОБНОВЛЕННАЯ ПАНЕЛЬ ПРОФИЛЯ -->
-<div class="me-panel-container">
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XOXO V2</title>
     
-    <!-- Всплывающее меню настроек (Скрыто по умолчанию) -->
-    <div id="settings-popup" class="popup-menu settings-menu">
-        <div class="menu-item">🔔 Уведомления</div>
-        <div class="menu-item">🎨 Тема</div>
-        <div class="menu-divider"></div>
-        <div class="menu-item danger" id="btn-logout">🚪 Выйти</div>
-    </div>
+    <!-- Фавиконка -->
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
+    
+    <!-- Шрифты -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Стили (с версией, чтобы сбросить кеш) -->
+    <link rel="stylesheet" href="css/app.css?v=final_fix">
+</head>
+<body>
 
-    <!-- Всплывающее меню статуса (Скрыто по умолчанию) -->
-    <div id="status-popup" class="popup-menu status-menu">
-        <div class="status-option" data-status="online"><span class="dot online"></span> В сети</div>
-        <div class="status-option" data-status="busy"><span class="dot busy"></span> Занят</div>
-        <div class="status-option" data-status="offline"><span class="dot offline"></span> Невидимка</div>
-    </div>
-
-    <!-- Сама карточка -->
-    <div class="me-card">
+    <div class="app-layout">
         
-        <!-- Аватар + Статус -->
-        <div class="avatar-wrapper" id="my-avatar-wrap">
-            <!-- Сюда JS вставит 3D canvas -->
-            <div id="my-avatar-3d" class="avatar-canvas"></div>
+        <!-- ЛЕВАЯ ПАНЕЛЬ (SIDEBAR) -->
+        <aside class="sidebar">
             
-            <!-- Оверлей при наведении (изменить аватар) -->
-            <div class="avatar-hover-overlay">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            <!-- Логотип -->
+            <div class="logo-container">
+                <img src="logo.svg" alt="XOXO" class="sidebar-logo">
+                <div class="logo-text">XOXO <span style="color:#8A2BE2">V2</span></div>
             </div>
+            
+            <!-- Навигация по комнатам -->
+            <nav class="rooms-nav">
+                <button class="active"># Общий холл</button>
+                <button># Флудилка</button>
+                <button># Признания</button>
+            </nav>
 
-            <!-- Точка статуса (Кликабельная) -->
-            <div id="current-status-dot" class="status-dot online" title="Изменить статус"></div>
-        </div>
+            <!-- НИЖНЯЯ ПАНЕЛЬ ПРОФИЛЯ -->
+            <div class="me-panel-container">
+                
+                <!-- Всплывающее меню настроек (Скрыто по умолчанию) -->
+                <div id="settings-popup" class="popup-menu settings-menu">
+                    <div class="menu-item">🔔 Уведомления</div>
+                    <div class="menu-item">🎨 Тема</div>
+                    <div class="menu-divider"></div>
+                    <div class="menu-item danger" id="btn-logout">🚪 Выйти</div>
+                </div>
 
-        <!-- Инфо -->
-        <div class="user-meta">
-            <div id="my-name" class="username">Загрузка...</div>
-            <div id="my-status-text" class="status-text">Online</div>
-        </div>
+                <!-- Всплывающее меню статуса (Скрыто по умолчанию) -->
+                <div id="status-popup" class="popup-menu status-menu">
+                    <div class="status-option" data-status="online"><span class="dot online"></span> В сети</div>
+                    <div class="status-option" data-status="busy"><span class="dot busy"></span> Занят</div>
+                    <div class="status-option" data-status="offline"><span class="dot offline"></span> Невидимка</div>
+                </div>
 
-        <!-- Кнопка настроек -->
-        <button id="btn-settings-toggle" class="settings-btn" title="Настройки">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-        </button>
+                <!-- Карточка профиля -->
+                <div class="me-card">
+                    
+                    <!-- Аватар + Статус -->
+                    <div class="avatar-wrapper" id="my-avatar-wrap">
+                        <!-- Сюда JS вставит 3D canvas -->
+                        <div id="my-avatar-3d" class="avatar-canvas"></div>
+                        
+                        <!-- Оверлей при наведении -->
+                        <div class="avatar-hover-overlay">
+                            <!-- Иконка камеры -->
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        </div>
+
+                        <!-- Точка статуса -->
+                        <div id="current-status-dot" class="status-dot online" title="Изменить статус"></div>
+                    </div>
+
+                    <!-- Инфо -->
+                    <div class="user-meta">
+                        <div id="my-name" class="username">Загрузка...</div>
+                        <div id="my-status-text" class="status-text">Online</div>
+                    </div>
+
+                    <!-- Кнопка настроек -->
+                    <button id="btn-settings-toggle" class="settings-btn" title="Настройки">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ПРАВАЯ ПАНЕЛЬ (ЧАТ) -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <h2 id="room-title"># Загрузка...</h2>
+            </header>
+
+            <!-- Список сообщений -->
+            <div id="chat-messages-area" class="messages-list"></div>
+
+            <!-- Поле ввода -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="msg-input" placeholder="Написать сообщение..." autocomplete="off">
+                    <button id="send-btn">➤</button>
+                </div>
+            </div>
+        </main>
+
     </div>
-</div>
+
+    <!-- Подключаем главный скрипт -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
