@@ -91,17 +91,11 @@ export class ChatArea {
             }
         });
 
-        // НОВОЕ: Слушаем событие от RightSidebar
         document.addEventListener('request-lightbox', (e) => {
             const src = e.detail.src;
-            // Ищем эту картинку в текущей галерее чата
             const idx = this.galleryImages.findIndex(img => img.src === src);
             if (idx !== -1) {
                 this.openLightbox(idx);
-            } else {
-                // Если вдруг картинки нет в галерее (редкий случай рассинхрона), 
-                // просто ничего не делаем или можно открыть одиночный просмотр (но лучше пока так)
-                console.warn("Image not found in current chat gallery context");
             }
         });
     }
@@ -203,6 +197,7 @@ export class ChatArea {
             row.id = `msg-${msg.id}`;
             row.dataset.msg = encodeURIComponent(JSON.stringify(msg));
 
+            // Форматируем сообщение
             const formattedContent = this.formatMessage(msg.text, msg);
 
             const time = new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -224,6 +219,7 @@ export class ChatArea {
             
             row.querySelectorAll('.spoiler').forEach(sp => sp.addEventListener('click', () => sp.classList.toggle('revealed')));
             
+            // Клики на элементы сетки
             row.querySelectorAll('.media-item').forEach(item => {
                 item.onclick = (e) => {
                     e.stopPropagation();
@@ -232,6 +228,7 @@ export class ChatArea {
                 };
             });
 
+            // Клики на одиночные картинки (страховка)
             row.querySelectorAll('img').forEach(img => {
                 if(!img.closest('.avatar') && !img.closest('.media-item')) {
                     const idx = this.galleryImages.findIndex(x => x.src === img.src);
@@ -245,9 +242,19 @@ export class ChatArea {
         this.container.scrollTop = this.container.scrollHeight;
     }
 
+    // УМНЫЙ ПАРСЕР
     formatMessage(rawHtml, msgObj) {
         const temp = document.createElement('div');
         temp.innerHTML = rawHtml;
+
+        // ШАГ 0: "Разворачиваем" картинки из лишних div/p
+        const deepImages = temp.querySelectorAll('img');
+        deepImages.forEach(img => {
+            const parent = img.parentElement;
+            if (parent && parent !== temp && parent.innerText.trim() === '' && parent.childNodes.length === 1) {
+                parent.replaceWith(img);
+            }
+        });
 
         const nodes = Array.from(temp.childNodes);
         let resultHtml = '';
@@ -257,7 +264,6 @@ export class ChatArea {
             if (imageGroup.length === 0) return;
 
             const startIndex = this.galleryImages.length;
-            
             imageGroup.forEach(img => {
                 this.galleryImages.push({
                     src: img.src,
@@ -278,30 +284,28 @@ export class ChatArea {
         };
 
         nodes.forEach(node => {
+            if (node.nodeType === 3 && !node.textContent.trim()) return;
+
             if (node.nodeName === 'IMG') {
                 imageGroup.push(node);
             } 
+            else if (node.nodeName === 'BR') {
+                if (imageGroup.length === 0) resultHtml += '<br>';
+            }
             else {
-                const isWhitespace = node.nodeType === 3 && !node.textContent.trim();
-                const isBr = node.nodeName === 'BR';
-
-                if ((isWhitespace || isBr) && imageGroup.length > 0) {
-                    return; 
-                }
-
                 flushImages();
-
                 if (node.nodeType === 3) {
-                    if (node.textContent.trim()) {
-                        resultHtml += `<div class="text-part">${this.sanitizeHTML(node.textContent)}</div>`;
-                    }
+                    resultHtml += `<div class="text-part">${this.sanitizeHTML(node.textContent)}</div>`;
                 } else {
-                    resultHtml += node.outerHTML;
+                    const cleanInner = this.sanitizeHTML(node.innerHTML);
+                    resultHtml += `<div class="text-part">${cleanInner}</div>`;
                 }
             }
         });
 
         flushImages();
+        
+        if (!resultHtml) return '<span style="opacity:0.5; font-style:italic;">Пустое сообщение</span>';
         return resultHtml;
     }
 
