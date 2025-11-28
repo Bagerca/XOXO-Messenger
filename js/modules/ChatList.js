@@ -8,21 +8,20 @@ export class ChatList {
         
         this.localRooms = [];
         this.localCategories = [];
-        
-        // Хранилище свернутых категорий
         this.collapsedCategories = new Set();
-        
-        // Для отслеживания новых сообщений (чтобы не орать при F5)
         this.roomsState = {}; 
-        this.isInitialLoad = true; // Флаг первой загрузки
+        this.isInitialLoad = true;
 
         this.draggedType = null; 
         this.draggedId = null;   
 
-        // Запрашиваем разрешение на уведомления сразу
+        // Элементы контекстного меню
+        this.ctxMenu = document.getElementById('context-menu');
+        this.targetElementData = null; // Данные элемента, на котором вызвали меню
+
+        this.initContextMenu();
         this.requestNotificationPermission();
 
-        // Слушаем вход в комнату -> помечаем прочитанным
         document.addEventListener('room-selected', (e) => {
             this.markAsRead(e.detail.id);
         });
@@ -35,15 +34,196 @@ export class ChatList {
 
         ChatService.subscribeToRooms((rooms) => {
             this.localRooms = rooms;
-            this.checkNewMessages(); // Проверяем на новые сообщения
+            this.checkNewMessages();
             this.render();
-            this.isInitialLoad = false; // Первая загрузка прошла
+            this.isInitialLoad = false;
         });
 
         this.initRootDropZone();
     }
 
-    // --- УВЕДОМЛЕНИЯ ---
+    // --- CONTEXT MENU LOGIC ---
+    initContextMenu() {
+        // Скрытие меню при клике в любом месте
+        document.addEventListener('click', () => this.hideContextMenu());
+        document.addEventListener('contextmenu', (e) => {
+            // Если клик не по нашему элементу, скрываем
+            if (!e.target.closest('.room-item') && !e.target.closest('.category-header')) {
+                this.hideContextMenu();
+            }
+        });
+
+        // Обработчики кнопок меню
+        document.getElementById('ctx-open').onclick = () => this.handleCtxAction('open');
+        document.getElementById('ctx-read').onclick = () => this.handleCtxAction('read');
+        document.getElementById('ctx-edit-room').onclick = () => this.handleCtxAction('edit-room');
+        document.getElementById('ctx-move-room').onclick = () => this.handleCtxAction('move-room');
+        document.getElementById('ctx-rename-cat').onclick = () => this.handleCtxAction('rename-cat');
+        document.getElementById('ctx-leave-room').onclick = () => this.handleCtxAction('leave-room');
+        document.getElementById('ctx-delete-room').onclick = () => this.handleCtxAction('delete-room');
+        document.getElementById('ctx-delete-cat').onclick = () => this.handleCtxAction('delete-cat');
+    }
+
+    showContextMenu(e, type, data) {
+        e.preventDefault();
+        this.targetElementData = { type, ...data };
+
+        // Показываем/скрываем пункты в зависимости от типа и прав
+        const isOwner = data.ownerId === this.currentUser.uid;
+        
+        const setDisplay = (id, show) => document.getElementById(id).style.display = show ? 'flex' : 'none';
+
+        if (type === 'room') {
+            setDisplay('ctx-open', true);
+            setDisplay('ctx-read', true);
+            setDisplay('ctx-edit-room', isOwner);
+            setDisplay('ctx-move-room', isOwner); // Только владелец может перемещать? Или все? Пусть пока владелец.
+            setDisplay('ctx-delete-room', isOwner);
+            setDisplay('ctx-leave-room', !isOwner);
+            
+            setDisplay('ctx-rename-cat', false);
+            setDisplay('ctx-delete-cat', false);
+        } else if (type === 'category') {
+            setDisplay('ctx-open', false);
+            setDisplay('ctx-read', false);
+            setDisplay('ctx-edit-room', false);
+            setDisplay('ctx-move-room', false);
+            setDisplay('ctx-leave-room', false);
+            setDisplay('ctx-delete-room', false);
+
+            setDisplay('ctx-rename-cat', true);
+            setDisplay('ctx-delete-cat', true);
+        }
+
+        // Позиционирование
+        this.ctxMenu.style.display = 'flex'; // Сначала показываем, чтобы получить размеры
+        
+        let x = e.clientX;
+        let y = e.clientY;
+        
+        // Коррекция, чтобы не вылезало за экран
+        const menuWidth = this.ctxMenu.offsetWidth;
+        const menuHeight = this.ctxMenu.offsetHeight;
+        
+        if (x + menuWidth > window.innerWidth) x -= menuWidth;
+        if (y + menuHeight > window.innerHeight) y -= menuHeight;
+
+        this.ctxMenu.style.left = `${x}px`;
+        this.ctxMenu.style.top = `${y}px`;
+        this.ctxMenu.classList.add('active');
+    }
+
+    hideContextMenu() {
+        this.ctxMenu.style.display = 'none';
+        this.ctxMenu.classList.remove('active');
+        this.targetElementData = null;
+    }
+
+    handleCtxAction(action) {
+        const data = this.targetElementData;
+        if (!data) return;
+
+        if (action === 'open') {
+            document.dispatchEvent(new CustomEvent('room-selected', { detail: data }));
+        }
+        else if (action === 'read') {
+            this.markAsRead(data.id);
+        }
+        else if (action === 'edit-room') {
+            // Открываем существующую модалку редактирования
+            // Нужно передать ID в глобальную область или вызвать логику из app.js
+            window.editingRoomId = data.id; // Хак для связи с app.js
+            document.getElementById('edit-room-name').value = data.name;
+            document.getElementById('edit-room-avatar').value = data.avatar;
+            document.getElementById('edit-room-modal').classList.add('open');
+        }
+        else if (action === 'delete-room') {
+            if(confirm(`Удалить группу "${data.name}"?`)) {
+                ChatService.deleteRoom(data.id);
+            }
+        }
+        else if (action === 'leave-room') {
+            if(confirm(`Покинуть группу "${data.name}"?`)) {
+                ChatService.leaveRoom(data.id, this.currentUser.uid);
+            }
+        }
+        else if (action === 'delete-cat') {
+            if(confirm(`Удалить категорию "${data.name}"? Все чаты переместятся в общий список.`)) {
+                ChatService.deleteCategory(data.id);
+            }
+        }
+        else if (action === 'move-room') {
+            this.openMoveRoomModal(data.id);
+        }
+        else if (action === 'rename-cat') {
+            this.openRenameCatModal(data.id, data.name);
+        }
+
+        this.hideContextMenu();
+    }
+
+    // Вспомогательные методы для модалок
+    openMoveRoomModal(roomId) {
+        const modal = document.getElementById('move-room-modal');
+        const select = document.getElementById('move-room-select');
+        const btnConfirm = document.getElementById('btn-confirm-move');
+        const btnCancel = document.getElementById('btn-cancel-move');
+
+        // Заполняем селект
+        select.innerHTML = '<option value="root">Без категории</option>';
+        this.localCategories.forEach(cat => {
+            select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+        });
+
+        modal.classList.add('open');
+
+        const confirmHandler = async () => {
+            const catId = select.value;
+            await ChatService.updateRoom(roomId, { categoryId: catId });
+            modal.classList.remove('open');
+            cleanup();
+        };
+        const cancelHandler = () => { modal.classList.remove('open'); cleanup(); };
+
+        function cleanup() {
+            btnConfirm.removeEventListener('click', confirmHandler);
+            btnCancel.removeEventListener('click', cancelHandler);
+        }
+
+        btnConfirm.addEventListener('click', confirmHandler);
+        btnCancel.addEventListener('click', cancelHandler);
+    }
+
+    openRenameCatModal(catId, currentName) {
+        const modal = document.getElementById('rename-cat-modal');
+        const input = document.getElementById('rename-cat-input');
+        const btnConfirm = document.getElementById('btn-confirm-rename-cat');
+        const btnCancel = document.getElementById('btn-cancel-rename-cat');
+
+        input.value = currentName;
+        modal.classList.add('open');
+        input.focus();
+
+        const confirmHandler = async () => {
+            const newName = input.value.trim();
+            if (newName) {
+                await ChatService.updateCategory(catId, { name: newName });
+            }
+            modal.classList.remove('open');
+            cleanup();
+        };
+        const cancelHandler = () => { modal.classList.remove('open'); cleanup(); };
+
+        function cleanup() {
+            btnConfirm.removeEventListener('click', confirmHandler);
+            btnCancel.removeEventListener('click', cancelHandler);
+        }
+
+        btnConfirm.addEventListener('click', confirmHandler);
+        btnCancel.addEventListener('click', cancelHandler);
+    }
+
+    // --- EXISTING LOGIC (Render, Drag, Notifications) ---
     requestNotificationPermission() {
         if ("Notification" in window && Notification.permission !== "granted") {
             Notification.requestPermission();
@@ -52,17 +232,8 @@ export class ChatList {
 
     sendSystemNotification(title, body, icon) {
         if (Notification.permission === "granted") {
-            const notif = new Notification(title, {
-                body: body,
-                icon: icon || "logo.svg", // Твой логотип
-                silent: false
-            });
-            
-            // При клике на уведомление открываем окно браузера
-            notif.onclick = () => {
-                window.focus();
-                notif.close();
-            };
+            const notif = new Notification(title, { body, icon: icon || "logo.svg", silent: false });
+            notif.onclick = () => { window.focus(); notif.close(); };
         }
     }
 
@@ -71,36 +242,18 @@ export class ChatList {
             const prevTime = this.roomsState[room.id] || 0;
             const newTime = room.lastMessageAt || 0;
             const isActive = this.chatUI.currentRoomId === room.id;
-
-            // Если время изменилось И это не первая загрузка И мы не в этом чате
             if (newTime > prevTime && !this.isInitialLoad && !isActive) {
-                
-                // Проверяем, что сообщение не от нас самих (опционально)
-                // Но у нас в списке комнат нет инфы о последнем авторе, 
-                // поэтому уведомляем о факте изменения.
-                
-                this.sendSystemNotification(
-                    `Сообщение в ${room.name}`, 
-                    "Новое сообщение", 
-                    room.avatar || "logo.svg"
-                );
-                
-                // Звук (опционально, можно добавить mp3 файл)
-                // const audio = new Audio('sound.mp3'); audio.play();
+                this.sendSystemNotification(`Сообщение в ${room.name}`, "Новое сообщение", room.avatar || "logo.svg");
             }
-
-            // Обновляем состояние
             this.roomsState[room.id] = newTime;
         });
     }
 
-    // --- ПРОЧИТАННОСТЬ ---
     markAsRead(roomId) {
         localStorage.setItem(`xoxo_lastRead_${roomId}`, Date.now());
         this.render(); 
     }
 
-    // --- РЕНДЕРИНГ (Остается прежним с небольшими правками для бейджа) ---
     render() {
         const scrollPos = this.container.scrollTop;
         this.container.innerHTML = '';
@@ -116,7 +269,6 @@ export class ChatList {
             if (room.type === 'private' && !isMember && !isOwner) return;
 
             const catId = room.categoryId && roomsByCat[room.categoryId] ? room.categoryId : 'uncategorized';
-            
             if (catId === 'uncategorized' && (!room.categoryId || room.categoryId === 'root' || room.categoryId === 'uncategorized')) {
                 rootRooms.push(room);
             } else {
@@ -150,10 +302,8 @@ export class ChatList {
             localStorage.setItem(`xoxo_lastRead_${room.id}`, Date.now());
         }
 
-        // Логика зеленого кружка
         const lastRead = localStorage.getItem(`xoxo_lastRead_${room.id}`) || 0;
         const lastMsg = room.lastMessageAt || 0;
-        // Показываем кружок, если есть новое сообщение И мы не в чате
         const hasUnread = !isActive && (lastMsg > lastRead);
 
         let avatarHtml = `<div class="room-avatar">#</div>`;
@@ -174,11 +324,14 @@ export class ChatList {
         
         btn.addEventListener('click', (e) => {
             e.stopPropagation(); 
-            // Убираем бейдж визуально сразу
             const badge = btn.querySelector('.unread-badge');
             if(badge) badge.remove();
-            
             document.dispatchEvent(new CustomEvent('room-selected', { detail: room }));
+        });
+
+        // ПРАВЫЙ КЛИК (CONTEXT MENU)
+        btn.addEventListener('contextmenu', (e) => {
+            this.showContextMenu(e, 'room', room);
         });
 
         // Drag handlers
@@ -221,6 +374,11 @@ export class ChatList {
                 this.collapsedCategories.delete(cat.id);
             }
         });
+
+        // ПРАВЫЙ КЛИК ПО КАТЕГОРИИ
+        header.addEventListener('contextmenu', (e) => {
+            this.showContextMenu(e, 'category', cat);
+        });
         
         const roomsContainer = document.createElement('div');
         roomsContainer.className = 'category-rooms';
@@ -229,7 +387,7 @@ export class ChatList {
         catContainer.appendChild(header);
         catContainer.appendChild(roomsContainer);
 
-        // Drag & Drop logic for Categories
+        // Drag & Drop logic
         catContainer.addEventListener('dragstart', (e) => {
             if (this.draggedType === 'room') return; 
             this.draggedType = 'category';
@@ -263,7 +421,6 @@ export class ChatList {
 
         catContainer.addEventListener('drop', async (e) => {
             e.preventDefault(); e.stopPropagation();
-            const isAbove = catContainer.classList.contains('drop-above');
             this.clearVisuals(catContainer);
             if (!this.draggedId) return;
 
@@ -274,7 +431,6 @@ export class ChatList {
                 }
             } else if (this.draggedType === 'category' && this.draggedId !== cat.id) {
                 const srcCat = this.localCategories.find(c => c.id === this.draggedId);
-                // Простая смена order (Swap)
                 const srcOrder = srcCat.order;
                 const targetOrder = cat.order;
                 await ChatService.updateCategory(srcCat.id, { order: targetOrder });
