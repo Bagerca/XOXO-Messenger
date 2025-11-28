@@ -23,7 +23,7 @@
 <body>
 
     <!-- ============================================== -->
-    <!-- КОНТЕКСТНОЕ МЕНЮ (ПКМ) -->
+    <!-- КОНТЕКСТНОЕ МЕНЮ (ПКМ) - БОКОВАЯ ПАНЕЛЬ -->
     <!-- ============================================== -->
     <div id="context-menu" class="context-menu">
         <div class="ctx-item" id="ctx-open">📂 Открыть</div>
@@ -290,7 +290,7 @@
         </div>
     </div>
 
-    <!-- 7. Настройки профиля (сокращено, внутренности не менялись) -->
+    <!-- 7. Настройки профиля -->
     <div id="settings-modal" class="modal-overlay">
         <div class="settings-window">
             <div class="modal-glow"></div>
@@ -330,6 +330,30 @@
                     <div class="section-title">ФОН БАННЕРА</div>
                     <div class="grid-options" id="grid-banners"><div class="grid-opt" data-val="none" style="background:#222;">OFF</div><div class="grid-opt" data-val="avatars/Lead_Horizon_Katana.jpg" style="background-image: url('avatars/Lead_Horizon_Katana.jpg')"></div></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- КОНТЕКСТНОЕ МЕНЮ СООБЩЕНИЙ (НОВОЕ) -->
+    <!-- ============================================== -->
+    <div id="msg-context-menu" class="context-menu">
+        <div class="ctx-item" id="ctx-msg-copy">📄 Копировать текст</div>
+        <div class="ctx-item" id="ctx-msg-pin">📌 Закрепить/Открепить</div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" id="ctx-msg-edit">✏️ Редактировать</div>
+        <div class="ctx-item text-danger" id="ctx-msg-delete">🗑 Удалить</div>
+    </div>
+
+    <!-- МОДАЛКА РЕДАКТИРОВАНИЯ СООБЩЕНИЯ -->
+    <div id="edit-msg-modal" class="modal-overlay">
+        <div class="modal-simple">
+            <h3>Редактирование</h3>
+            <!-- Используем div contenteditable, чтобы сохранить форматирование -->
+            <div id="edit-msg-input" class="rich-input" contenteditable="true" style="background:rgba(0,0,0,0.2); border:1px solid #444; min-height:80px; text-align:left; margin-bottom:15px; border-radius:10px; padding:10px;"></div>
+            <div class="modal-actions">
+                <button id="btn-cancel-edit-msg" class="btn-text">Отмена</button>
+                <button id="btn-save-edit-msg" class="btn-primary">Сохранить</button>
             </div>
         </div>
     </div>
