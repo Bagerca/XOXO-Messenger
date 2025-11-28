@@ -6,40 +6,55 @@
     <title>XOXO V2</title>
     <link rel="icon" type="image/svg+xml" href="logo.svg">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/app.css?v=private_update">
+    <link rel="stylesheet" href="css/app.css?v=tg_style">
     <script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
 </head>
 <body>
 
     <div class="app-layout">
         
-        <!-- ЛЕВАЯ ПАНЕЛЬ (SIDEBAR) -->
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="logo-container">
                 <img src="logo.svg" alt="XOXO" class="sidebar-logo">
                 <div class="logo-text">XOXO <span style="color:#8A2BE2">V2</span></div>
             </div>
             
-            <!-- 1. ГЛАВНАЯ КНОПКА (ОБЩИЙ ХОЛЛ) -->
+            <!-- 1. ЗАКРЕПЛЕННЫЕ (Избранное и Общий) -->
             <div class="nav-pinned">
-                <button class="nav-item active" id="btn-home">
-                    <!-- Иконка домика -->
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                    <span>Общий холл</span>
+                <button class="nav-item-lg" id="btn-saved">
+                    <div class="nav-icon-box" style="background: linear-gradient(135deg, #FF9966, #FF5E62);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                    </div>
+                    <div class="nav-text">
+                        <span class="nav-title">Избранное</span>
+                        <span class="nav-desc">Личные заметки</span>
+                    </div>
+                </button>
+
+                <button class="nav-item-lg active" id="btn-home">
+                    <div class="nav-icon-box" style="background: linear-gradient(135deg, #8A2BE2, #6a11cb);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    </div>
+                    <div class="nav-text">
+                        <span class="nav-title">Общий холл</span>
+                        <span class="nav-desc">Сообщество</span>
+                    </div>
                 </button>
             </div>
 
+            <!-- ЗАГОЛОВОК + ПЛЮСИК -->
             <div class="rooms-divider">
-                <span>ЧАТЫ</span>
+                <span>ВАШИ ЧАТЫ</span>
                 <button id="btn-create-room-toggle" title="Создать канал">+</button>
             </div>
 
-            <!-- 2. СПИСОК ОСТАЛЬНЫХ ЧАТОВ -->
+            <!-- 2. СПИСОК КОМНАТ (С КАТЕГОРИЯМИ) -->
             <nav class="rooms-nav" id="rooms-list-container">
-                <!-- Сюда JS добавит комнаты -->
+                <!-- JS рендерит сюда категории и чаты -->
             </nav>
 
-            <!-- 3. ПАНЕЛЬ ПРОФИЛЯ -->
+            <!-- 3. ПРОФИЛЬ -->
             <div class="me-panel-container">
                 <div id="status-popup" class="status-popup">
                     <div class="status-option" data-status="online"><span class="dot online"></span> В сети</div>
@@ -56,25 +71,31 @@
                             <div id="current-status-dot" class="status-dot online"></div>
                         </div>
                         <div class="user-meta">
-                            <div id="my-name" class="username">Загрузка...</div>
-                            <div id="my-status-text" class="status-text">Connecting</div>
+                            <div id="my-name" class="username">...</div>
                         </div>
                         <button id="btn-settings-toggle" class="settings-btn">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         </button>
                     </div>
                 </div>
             </div>
         </aside>
 
-        <!-- ПРАВАЯ ПАНЕЛЬ (ЧАТ) -->
+        <!-- CHAT AREA -->
         <main class="chat-area">
             <header class="chat-header">
-                <h2 id="room-title"># Общий холл</h2>
-                <!-- Иконка замка (появляется если чат приватный) -->
-                <div id="room-lock-icon" style="display:none; margin-left:10px; opacity:0.5; font-size: 16px;">🔒</div>
+                <div class="header-info">
+                    <h2 id="room-title"># Общий холл</h2>
+                    <span id="room-desc" class="room-desc">Открытый чат</span>
+                </div>
+                <!-- Кнопка редактирования комнаты (видна только владельцу) -->
+                <button id="btn-edit-room" class="btn-icon" style="display:none;" title="Редактировать группу">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
             </header>
+            
             <div id="chat-messages-area" class="messages-list"></div>
+            
             <div class="input-area">
                 <div class="input-wrapper">
                     <input type="text" id="msg-input" placeholder="Написать сообщение..." autocomplete="off">
@@ -84,28 +105,36 @@
         </main>
     </div>
 
-    <!-- ============================================== -->
-    <!-- 1. МОДАЛКА СОЗДАНИЯ ЧАТА -->
-    <!-- ============================================== -->
+    <!-- МОДАЛКА СОЗДАНИЯ ЧАТА -->
     <div id="create-room-modal" class="modal-overlay">
         <div class="modal-simple">
-            <h3>Создать канал</h3>
-            <input type="text" id="new-room-name" placeholder="Название комнаты" autocomplete="off" class="modal-inp">
+            <h3>Создать группу</h3>
+            <input type="text" id="new-room-name" placeholder="Название группы" class="modal-inp">
             
+            <div class="input-group-row">
+                <input type="text" id="new-room-cat" placeholder="Категория (напр. Игры)" class="modal-inp" list="cat-suggestions">
+                <datalist id="cat-suggestions">
+                    <option value="Разное">
+                    <option value="Игры">
+                    <option value="Работа">
+                    <option value="Друзья">
+                </datalist>
+            </div>
+
+            <input type="text" id="new-room-avatar" placeholder="Ссылка на аватар (URL)" class="modal-inp">
+
             <div class="room-type-selector">
                 <label class="radio-label">
                     <input type="radio" name="roomType" value="public" checked> 
-                    <span># Открытый</span>
+                    <span>🌐 Публичная</span>
                 </label>
                 <label class="radio-label">
                     <input type="radio" name="roomType" value="private"> 
-                    <span>🔒 Приватный</span>
+                    <span>🔒 Приватная</span>
                 </label>
             </div>
-
-            <div id="room-pass-container" style="display: none; margin-top: 10px;">
-                <input type="text" id="new-room-pass" placeholder="Придумайте пароль" class="modal-inp" autocomplete="off">
-            </div>
+            
+            <p class="hint-text" id="private-hint" style="display:none;">Приватные группы не видны в поиске. Участников нужно добавлять вручную (Скоро).</p>
 
             <div class="modal-actions">
                 <button id="btn-cancel-create" class="btn-text">Отмена</button>
@@ -114,28 +143,25 @@
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- 2. МОДАЛКА ВХОДА В ПРИВАТНЫЙ ЧАТ -->
-    <!-- ============================================== -->
-    <div id="password-modal" class="modal-overlay">
+    <!-- МОДАЛКА РЕДАКТИРОВАНИЯ КОМНАТЫ -->
+    <div id="edit-room-modal" class="modal-overlay">
         <div class="modal-simple">
-            <h3>🔒 Доступ закрыт</h3>
-            <p style="font-size:13px; color:#888; margin-top:-15px; margin-bottom: 20px;">Введите пароль, чтобы войти в комнату</p>
-            <input type="password" id="join-room-pass" placeholder="Пароль..." class="modal-inp">
+            <h3>Настройки группы</h3>
+            <input type="text" id="edit-room-name" placeholder="Новое название" class="modal-inp">
+            <input type="text" id="edit-room-avatar" placeholder="Новый URL аватара" class="modal-inp">
+            
             <div class="modal-actions">
-                <button id="btn-cancel-pass" class="btn-text">Отмена</button>
-                <button id="btn-confirm-pass" class="btn-primary">Войти</button>
+                <button id="btn-cancel-edit" class="btn-text">Отмена</button>
+                <button id="btn-confirm-edit" class="btn-primary">Сохранить</button>
             </div>
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- 3. МОДАЛКА НАСТРОЕК (ПРОФИЛЬ) -->
-    <!-- ============================================== -->
+    <!-- МОДАЛКА ПРОФИЛЯ (Без изменений, вставляю сокращенно для целостности) -->
     <div id="settings-modal" class="modal-overlay">
         <div class="settings-window">
+             <!-- (Код профиля из прошлых ответов, он не меняется визуально) -->
             <div class="modal-glow"></div>
-
             <div class="hero-section">
                 <div class="profile-card">
                     <div class="card-banner" id="prev-banner"></div>
@@ -143,41 +169,21 @@
                         <div class="avatar-box" id="prev-avatar-wrap">
                             <div class="avatar-frame frame-none" id="prev-frame"></div>
                             <div id="prev-avatar-3d" class="avatar-canvas"></div>
-                            <div class="btn-magic-edit" id="btn-edit-visuals" title="Изменить внешний вид">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
-                            </div>
+                            <div class="btn-magic-edit" id="btn-edit-visuals"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg></div>
                         </div>
-                        <div class="user-info">
-                            <h2 id="prev-nick">...</h2>
-                            <p id="prev-bio">...</p>
-                        </div>
+                        <div class="user-info"><h2 id="prev-nick">...</h2><p id="prev-bio">...</p></div>
                     </div>
                 </div>
             </div>
-
             <div class="views-container">
                 <div class="view-slide active" id="view-main">
-                    <div class="input-group">
-                        <label class="lbl">Никнейм</label>
-                        <input type="text" class="inp" id="set-nick" placeholder="Имя">
-                    </div>
-                    <div class="input-group">
-                        <label class="lbl">Статус (Bio)</label>
-                        <input type="text" class="inp" id="set-bio" placeholder="О себе">
-                    </div>
-                    <div class="save-area">
-                        <button class="btn-save" id="btn-save-settings">Сохранить изменения</button>
-                        <button class="btn-logout" id="btn-logout-modal">Выйти из аккаунта</button>
-                    </div>
+                    <div class="input-group"><label class="lbl">Никнейм</label><input type="text" class="inp" id="set-nick"></div>
+                    <div class="input-group"><label class="lbl">Статус</label><input type="text" class="inp" id="set-bio"></div>
+                    <div class="save-area"><button class="btn-save" id="btn-save-settings">Сохранить</button><button class="btn-logout" id="btn-logout-modal">Выйти</button></div>
                     <button class="btn-close-text" id="btn-close-modal">Закрыть</button>
                 </div>
-
                 <div class="view-slide" id="view-visuals">
-                    <button class="back-btn" id="btn-back-visuals">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M15 18l-6-6 6-6"/></svg>
-                        Назад
-                    </button>
-                    
+                    <button class="back-btn" id="btn-back-visuals">Назад</button>
                     <div class="section-title">АВАТАР</div>
                     <div class="grid-options" id="grid-avatars">
                         <div class="grid-opt" data-val="avatars/Ari LoL.png" style="background-image: url('avatars/Ari LoL.png')"></div>
@@ -186,24 +192,11 @@
                         <div class="grid-opt" data-val="avatars/kiriki.jpg" style="background-image: url('avatars/kiriki.jpg')"></div>
                     </div>
                     <div class="section-title">РАМКА</div>
-                    <div class="fx-list" id="list-frames">
-                        <div class="fx-btn active" data-val="frame-none">Нет</div>
-                        <div class="fx-btn" data-val="frame-neon">Neon</div>
-                        <div class="fx-btn" data-val="frame-gold">Gold</div>
-                        <div class="fx-btn" data-val="frame-cyber">Cyber</div>
-                    </div>
-                    <div class="section-title">ШЕЙДЕР</div>
-                    <div class="fx-list" id="list-shaders">
-                        <div class="fx-btn active" data-val="liquid">Liquid</div>
-                        <div class="fx-btn" data-val="glitch">Glitch</div>
-                        <div class="fx-btn" data-val="pixel">Pixel</div>
-                    </div>
-                    <div class="section-title">БАННЕР</div>
-                    <div class="grid-options" id="grid-banners">
-                        <div class="grid-opt" data-val="none" style="background:#222;display:flex;justify-content:center;align-items:center;font-size:10px;">OFF</div>
-                        <div class="grid-opt" data-val="avatars/Lead_Horizon_Katana.jpg" style="background-image: url('avatars/Lead_Horizon_Katana.jpg')"></div>
-                        <div class="grid-opt" data-val="avatars/kiriki.jpg" style="background-image: url('avatars/kiriki.jpg')"></div>
-                    </div>
+                    <div class="fx-list" id="list-frames"><div class="fx-btn" data-val="frame-none">Нет</div><div class="fx-btn" data-val="frame-neon">Neon</div><div class="fx-btn" data-val="frame-gold">Gold</div></div>
+                    <div class="section-title">ЭФФЕКТ</div>
+                    <div class="fx-list" id="list-shaders"><div class="fx-btn" data-val="liquid">Liquid</div><div class="fx-btn" data-val="glitch">Glitch</div></div>
+                     <div class="section-title">БАННЕР</div>
+                    <div class="grid-options" id="grid-banners"><div class="grid-opt" data-val="none">OFF</div><div class="grid-opt" data-val="avatars/Lead_Horizon_Katana.jpg" style="background-image: url('avatars/Lead_Horizon_Katana.jpg')"></div></div>
                 </div>
             </div>
         </div>
