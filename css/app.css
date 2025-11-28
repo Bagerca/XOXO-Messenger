@@ -25,7 +25,28 @@ body, html { margin: 0; padding: 0; height: 100%; font-family: 'Outfit', sans-se
     flex-direction: column;
     padding: 20px;
 }
-.logo { font-size: 24px; font-weight: 800; margin-bottom: 30px; }
+
+/* СТИЛИ ЛОГОТИПА */
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+    padding-left: 5px;
+}
+
+.sidebar-logo {
+    width: 42px;
+    height: 42px;
+    filter: drop-shadow(0 0 5px rgba(138,43,226,0.3));
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+}
+
 .rooms-nav button {
     display: block; width: 100%; text-align: left; background: none; border: none;
     color: #888; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: 600;
@@ -37,11 +58,11 @@ body, html { margin: 0; padding: 0; height: 100%; font-family: 'Outfit', sans-se
 .my-name { font-weight: bold; font-size: 14px; }
 
 
-/* --- ЧАТ ЗОНА (FIXED FLEXBOX) --- */
+/* --- ЧАТ ЗОНА --- */
 .chat-area {
     flex: 1;
     display: flex;
-    flex-direction: column; /* Вертикальный стек */
+    flex-direction: column; 
     position: relative;
     background: radial-gradient(circle at center, rgba(138,43,226,0.05), transparent 70%);
 }
@@ -52,46 +73,33 @@ body, html { margin: 0; padding: 0; height: 100%; font-family: 'Outfit', sans-se
     display: flex;
     align-items: center;
     padding: 0 20px;
-    flex-shrink: 0; /* Заголовок не сжимается */
+    flex-shrink: 0;
     background: rgba(5,5,17,0.8);
     backdrop-filter: blur(10px);
 }
 
-/* КОНТЕЙНЕР СООБЩЕНИЙ - ГЛАВНЫЙ ФИКС */
 .messages-list {
-    flex: 1;              /* Занимает все доступное место */
-    overflow-y: auto;     /* Скролл только тут */
+    flex: 1;
+    overflow-y: auto;
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;            /* Отступы между сообщениями */
-    justify-content: flex-start; /* Прижимаем к верху */
+    gap: 10px;
+    justify-content: flex-start;
 }
 
-/* СТРОКА СООБЩЕНИЯ */
 .message-row {
     display: flex;
-    align-items: flex-end; /* Аватарка внизу */
+    align-items: flex-end;
     gap: 10px;
-    flex-shrink: 0;        /* ЗАПРЕТ НА СЖАТИЕ */
+    flex-shrink: 0;
 }
 
 .message-row.me { flex-direction: row-reverse; }
 
-.avatar {
-    width: 36px; height: 36px;
-    border-radius: 10px;
-    background-size: cover;
-    flex-shrink: 0;
-}
-
-.bubble-wrapper {
-    display: flex;
-    flex-direction: column;
-    max-width: 60%;
-}
+.avatar { width: 36px; height: 36px; border-radius: 10px; background-size: cover; flex-shrink: 0; }
+.bubble-wrapper { display: flex; flex-direction: column; max-width: 60%; }
 .message-row.me .bubble-wrapper { align-items: flex-end; }
-
 .name { font-size: 11px; color: #888; margin-bottom: 4px; margin-left: 4px; }
 
 .bubble {
@@ -101,54 +109,16 @@ body, html { margin: 0; padding: 0; height: 100%; font-family: 'Outfit', sans-se
     color: white;
     font-size: 14px;
     line-height: 1.4;
-    word-wrap: break-word; /* Перенос слов */
+    word-wrap: break-word;
 }
 
-/* Цвета пузырей */
-.message-row.them .bubble {
-    background: var(--bubble-them);
-    border-radius: 4px 16px 16px 4px;
-}
-.message-row.me .bubble {
-    background: var(--bubble-me);
-    border-radius: 16px 4px 4px 16px;
-}
+.message-row.them .bubble { background: var(--bubble-them); border-radius: 4px 16px 16px 4px; }
+.message-row.me .bubble { background: var(--bubble-me); border-radius: 16px 4px 4px 16px; }
 
-.time {
-    font-size: 9px;
-    opacity: 0.6;
-    text-align: right;
-    margin-top: 4px;
-}
+.time { font-size: 9px; opacity: 0.6; text-align: right; margin-top: 4px; }
 
-/* --- ВВОД --- */
-.input-area {
-    padding: 20px;
-    flex-shrink: 0; /* Не сжимать */
-}
-.input-wrapper {
-    background: rgba(255,255,255,0.05);
-    border-radius: 30px;
-    padding: 5px 10px 5px 20px;
-    display: flex;
-    align-items: center;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-.input-wrapper input {
-    flex: 1;
-    background: none;
-    border: none;
-    color: white;
-    padding: 10px 0;
-    outline: none;
-}
-#send-btn {
-    width: 40px; height: 40px;
-    background: var(--primary);
-    border: none;
-    border-radius: 50%;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-}
+.input-area { padding: 20px; flex-shrink: 0; }
+.input-wrapper { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 5px 10px 5px 20px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
+.input-wrapper input { flex: 1; background: none; border: none; color: white; padding: 10px 0; outline: none; }
+#send-btn { width: 40px; height: 40px; background: var(--primary); border: none; border-radius: 50%; color: white; cursor: pointer; font-weight: bold; }
 #send-btn:hover { opacity: 0.9; }
