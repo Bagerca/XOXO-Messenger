@@ -93,7 +93,6 @@
 .message-row.me .bubble-wrapper { align-items: flex-end; }
 .message-row.them .bubble-wrapper { align-items: flex-start; }
 
-/* ПУЗЫРЬ СООБЩЕНИЯ */
 .bubble {
     padding: 10px 14px;
     border-radius: 16px; 
@@ -170,6 +169,7 @@ blockquote { margin: 0; font-style: normal; }
     position: relative;
     transition: filter 0.2s;
     min-height: 100px; 
+    pointer-events: auto; /* ВАЖНО: Разрешаем клик */
 }
 .media-item:hover { filter: brightness(1.1); }
 
@@ -192,6 +192,7 @@ blockquote { margin: 0; font-style: normal; }
     height: auto;
     border-radius: 12px;
     object-fit: contain;
+    cursor: pointer;
 }
 
 /* 2 Картинки */
