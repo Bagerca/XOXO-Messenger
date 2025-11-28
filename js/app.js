@@ -6,22 +6,31 @@ import { ChatUI } from "./ui/chat-ui.js";
 // --- Глобальные переменные ---
 let currentUser = null;
 let currentProfile = null;
+let chatUI = null;
 let mainAvatarRenderer = null;
 let previewAvatarRenderer = null;
-let tempState = {}; // Состояние изменений
+let tempState = {}; 
 
-// --- Элементы UI ---
-const modal = document.getElementById('settings-modal');
+// Элементы UI
+const modalSettings = document.getElementById('settings-modal');
+const modalCreateRoom = document.getElementById('create-room-modal');
 const statusPopup = document.getElementById('status-popup');
 const statusDot = document.getElementById('current-status-dot');
 
-// Элементы превью в модалке
+// Элементы комнат
+const roomsListContainer = document.getElementById('rooms-list-container');
+const btnCreateRoom = document.getElementById('btn-create-room-toggle');
+const inputRoomName = document.getElementById('new-room-name');
+const btnConfirmCreate = document.getElementById('btn-confirm-create');
+const btnCancelCreate = document.getElementById('btn-cancel-create');
+
+// Элементы превью в модалке настроек
 const prevNick = document.getElementById('prev-nick');
 const prevBio = document.getElementById('prev-bio');
 const prevBanner = document.getElementById('prev-banner');
 const prevFrame = document.getElementById('prev-frame');
 
-// Views (Экраны настроек)
+// Views настроек
 const viewMain = document.getElementById('view-main');
 const viewVisuals = document.getElementById('view-visuals');
 
@@ -35,7 +44,8 @@ AuthService.monitor(async (user) => {
     currentProfile = await ChatService.getProfile(user.uid, user.email);
 
     // 1. Инит Чата
-    new ChatUI(user, currentProfile).loadRoom("Общий холл");
+    chatUI = new ChatUI(user, currentProfile);
+    chatUI.loadRoom("general", "Общий холл");
 
     // 2. Инит Аватара (Главный в сайдбаре)
     mainAvatarRenderer = new AvatarRenderer("my-avatar-3d", currentProfile.avatar, {
@@ -46,10 +56,15 @@ AuthService.monitor(async (user) => {
     // 3. Заполнение UI сайдбара
     updateSidebarUI(currentProfile);
 
-    // 4. Инит Аватара в Модалке (Сразу создаем, чтобы был готов)
+    // 4. Инит Аватара в Модалке Настроек
     previewAvatarRenderer = new AvatarRenderer("prev-avatar-3d", currentProfile.avatar, {
         effect: currentProfile.effect || 'liquid',
         intensity: 0.5
+    });
+
+    // 5. Подписка на список комнат
+    ChatService.subscribeToRooms((rooms) => {
+        renderRoomsList(rooms);
     });
 });
 
@@ -61,32 +76,93 @@ function updateSidebarUI(profile) {
     document.getElementById("my-avatar-frame").className = `avatar-frame ${profile.frame || 'frame-none'}`;
     statusDot.className = `status-dot ${profile.status || 'online'}`;
     
-    // Обновляем эффект главного аватара если рендерер уже готов
     if(mainAvatarRenderer) {
         mainAvatarRenderer.updateSettings({ effect: profile.effect || 'liquid' });
     }
 }
 
-// --- УПРАВЛЕНИЕ МОДАЛКОЙ И НАСТРОЙКАМИ ---
+// ==========================================
+// ЛОГИКА КОМНАТ (НОВОЕ)
+// ==========================================
+
+function renderRoomsList(rooms) {
+    // Сохраняем кнопку "Общий холл" и очищаем остальное
+    const generalBtn = roomsListContainer.querySelector('[data-id="general"]');
+    roomsListContainer.innerHTML = '';
+    roomsListContainer.appendChild(generalBtn);
+
+    rooms.forEach(room => {
+        const btn = document.createElement('button');
+        btn.className = 'room-btn';
+        btn.innerText = `# ${room.name}`;
+        btn.dataset.id = room.id;
+        
+        if(chatUI && chatUI.currentRoomId === room.id) btn.classList.add('active');
+
+        btn.addEventListener('click', () => {
+            switchRoom(room.id, room.name);
+        });
+
+        roomsListContainer.appendChild(btn);
+    });
+}
+
+function switchRoom(roomId, roomName) {
+    document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.querySelector(`.room-btn[data-id="${roomId}"]`);
+    if(activeBtn) activeBtn.classList.add('active');
+
+    chatUI.loadRoom(roomId, roomName);
+}
+
+// Клик по "Общему холлу"
+document.querySelector('[data-id="general"]').addEventListener('click', () => {
+    switchRoom("general", "Общий холл");
+});
+
+// Открытие модалки создания
+btnCreateRoom.addEventListener('click', () => {
+    modalCreateRoom.classList.add('open');
+    inputRoomName.value = "";
+    inputRoomName.focus();
+});
+const closeCreateModal = () => modalCreateRoom.classList.remove('open');
+btnCancelCreate.addEventListener('click', closeCreateModal);
+
+// Создание комнаты
+btnConfirmCreate.addEventListener('click', async () => {
+    const name = inputRoomName.value.trim();
+    if(!name) return;
+
+    btnConfirmCreate.innerText = "...";
+    try {
+        await ChatService.createRoom(name, currentUser.email);
+        closeCreateModal();
+    } catch(e) {
+        console.error(e);
+        alert("Ошибка создания комнаты");
+    } finally {
+        btnConfirmCreate.innerText = "Создать";
+    }
+});
+
+
+// ==========================================
+// ЛОГИКА НАСТРОЕК ПРОФИЛЯ
+// ==========================================
 
 function openSettings() {
-    modal.classList.add('open');
+    modalSettings.classList.add('open');
     statusPopup.classList.remove('active');
     
-    // Сброс на главный экран (текст)
     switchView(false); 
-
-    // Копируем данные во временное состояние
     tempState = { ...currentProfile };
 
-    // Заполняем инпуты
     document.getElementById('set-nick').value = currentProfile.nickname;
     document.getElementById('set-bio').value = currentProfile.bio;
 
-    // Синхронизируем визуал превью
     syncPreview(currentProfile);
     
-    // Выделяем активные кнопки в гридах
     highlightSelection('grid-avatars', currentProfile.avatar);
     highlightSelection('grid-banners', currentProfile.banner || 'none');
     highlightSelection('list-frames', currentProfile.frame || 'frame-none');
@@ -105,36 +181,24 @@ function syncPreview(data) {
     }
 }
 
-// --- АНИМАЦИЯ ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ (GSAP) ---
 function switchView(toVisuals) {
     if(toVisuals) {
-        // Убираем Main влево, Показываем Visuals
         gsap.to(viewMain, {x: -50, opacity: 0, pointerEvents: 'none', duration: 0.3});
         gsap.fromTo(viewVisuals, {x: 50, opacity: 0}, {x: 0, opacity: 1, pointerEvents: 'all', duration: 0.3, delay: 0.1});
     } else {
-        // Наоборот
         gsap.to(viewVisuals, {x: 50, opacity: 0, pointerEvents: 'none', duration: 0.3});
         gsap.fromTo(viewMain, {x: -50, opacity: 0}, {x: 0, opacity: 1, pointerEvents: 'all', duration: 0.3, delay: 0.1});
     }
 }
 
-// --- СОБЫТИЯ ---
-
-// 1. Открытие настроек
 document.getElementById('btn-settings-toggle').addEventListener('click', openSettings);
 document.getElementById('my-avatar-wrap').addEventListener('click', (e) => {
-    // Если клик не по точке статуса, открываем настройки
     if(e.target !== statusDot) openSettings();
 });
-
-// 2. Закрытие настроек
-document.getElementById('btn-close-modal').addEventListener('click', () => modal.classList.remove('open'));
-
-// 3. Переключение видов (Волшебная кнопка и Назад)
+document.getElementById('btn-close-modal').addEventListener('click', () => modalSettings.classList.remove('open'));
 document.getElementById('btn-edit-visuals').addEventListener('click', () => switchView(true));
 document.getElementById('btn-back-visuals').addEventListener('click', () => switchView(false));
 
-// 4. Живой ввод текста
 document.getElementById('set-nick').addEventListener('input', (e) => {
     tempState.nickname = e.target.value;
     prevNick.innerText = e.target.value;
@@ -144,26 +208,18 @@ document.getElementById('set-bio').addEventListener('input', (e) => {
     prevBio.innerText = e.target.value;
 });
 
-// 5. Обработка кликов по гридам (Аватары, Баннеры, Рамки, Шейдеры)
 const setupGrid = (id, key, callback) => {
     document.getElementById(id).addEventListener('click', (e) => {
         const item = e.target.closest('[data-val]');
         if(!item) return;
-
-        // UI обновление
-        document.querySelectorAll(`#${id} [data-val]`).forEach(el => {
-            el.classList.remove('selected', 'active');
-        });
+        document.querySelectorAll(`#${id} [data-val]`).forEach(el => el.classList.remove('selected', 'active'));
         item.classList.add(item.classList.contains('fx-btn') ? 'active' : 'selected');
-
-        // Логика
         const val = item.dataset.val;
         tempState[key] = val;
         if(callback) callback(val);
     });
 };
 
-// Привязываем гриды
 setupGrid('grid-avatars', 'avatar', (val) => previewAvatarRenderer.updateImage(val));
 setupGrid('grid-banners', 'banner', (val) => prevBanner.style.backgroundImage = val !== 'none' ? `url('${val}')` : 'none');
 setupGrid('list-frames', 'frame', (val) => prevFrame.className = `avatar-frame ${val}`);
@@ -176,22 +232,18 @@ function highlightSelection(containerId, value) {
     });
 }
 
-// --- СОХРАНЕНИЕ ---
 document.getElementById('btn-save-settings').addEventListener('click', async () => {
     const btn = document.getElementById('btn-save-settings');
     btn.innerText = "Сохраняем...";
-    
     try {
         await ChatService.updateUserProfile(currentUser.uid, tempState);
         currentProfile = { ...currentProfile, ...tempState };
-        
         updateSidebarUI(currentProfile);
         if(mainAvatarRenderer) mainAvatarRenderer.updateImage(currentProfile.avatar);
-        
         btn.innerText = "Сохранено!";
         setTimeout(() => {
             btn.innerText = "Сохранить изменения";
-            modal.classList.remove('open');
+            modalSettings.classList.remove('open');
         }, 800);
     } catch (e) {
         console.error(e);
@@ -199,13 +251,11 @@ document.getElementById('btn-save-settings').addEventListener('click', async () 
     }
 });
 
-// --- ВЫХОД ---
 document.getElementById('btn-logout-modal').addEventListener('click', async () => {
     await AuthService.logout();
     window.location.href = "index.html";
 });
 
-// --- СТАТУС (Оставляем старую логику попапа) ---
 statusDot.addEventListener('click', (e) => { e.stopPropagation(); statusPopup.classList.toggle('active'); });
 document.querySelectorAll('.status-option').forEach(opt => {
     opt.addEventListener('click', async () => {
