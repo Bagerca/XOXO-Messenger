@@ -91,7 +91,6 @@ export class ChatArea {
             }
         });
 
-        // Слушаем запрос от правой панели на открытие фото
         document.addEventListener('request-lightbox', (e) => {
             const src = e.detail.src;
             const idx = this.galleryImages.findIndex(img => img.src === src);
@@ -198,7 +197,7 @@ export class ChatArea {
             row.id = `msg-${msg.id}`;
             row.dataset.msg = encodeURIComponent(JSON.stringify(msg));
 
-            // Форматируем сообщение (текст + сетка картинок + сохранение стилей)
+            // Форматируем сообщение (текст + сетка + парсинг)
             const formattedContent = this.formatMessage(msg.text, msg);
 
             const time = new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -229,7 +228,7 @@ export class ChatArea {
                 };
             });
 
-            // Навешиваем клик на одиночные картинки (страховка)
+            // Навешиваем клик на одиночные картинки
             row.querySelectorAll('img').forEach(img => {
                 if(!img.closest('.avatar') && !img.closest('.media-item')) {
                     const idx = this.galleryImages.findIndex(x => x.src === img.src);
@@ -243,20 +242,38 @@ export class ChatArea {
         this.container.scrollTop = this.container.scrollHeight;
     }
 
-    // УМНЫЙ ПАРСЕР (С ПОДДЕРЖКОЙ ВЫРАВНИВАНИЯ)
+    // УМНЫЙ ПАРСЕР V3 (Поддержка Text -> Grid -> Text)
     formatMessage(rawHtml, msgObj) {
         const temp = document.createElement('div');
         temp.innerHTML = rawHtml;
 
-        // ШАГ 0: "Разворачиваем" картинки из лишних div/p
-        const deepImages = temp.querySelectorAll('img');
-        deepImages.forEach(img => {
-            const parent = img.parentElement;
-            if (parent && parent !== temp && parent.innerText.trim() === '' && parent.childNodes.length === 1) {
-                parent.replaceWith(img);
+        // ШАГ 0: "Разворачиваем" картинки
+        const allImages = temp.querySelectorAll('img');
+        allImages.forEach(img => {
+            let parent = img.parentElement;
+            // Поднимаемся вверх, пока мы внутри temp
+            while (parent && parent !== temp) {
+                // Проверяем, есть ли в родителе текст
+                const hasText = Array.from(parent.childNodes).some(n => 
+                    (n.nodeType === 3 && n.textContent.trim().length > 0) || 
+                    (n.nodeType === 1 && n.tagName !== 'IMG' && n.tagName !== 'BR' && n.innerText.trim().length > 0)
+                );
+
+                if (!hasText) {
+                    // Текста нет -> это контейнер для медиа. Разворачиваем его.
+                    while (parent.firstChild) {
+                        parent.parentNode.insertBefore(parent.firstChild, parent);
+                    }
+                    const emptyParent = parent;
+                    parent = parent.parentNode;
+                    emptyParent.remove();
+                } else {
+                    break; 
+                }
             }
         });
 
+        // ШАГ 1: Линейный проход
         const nodes = Array.from(temp.childNodes);
         let resultHtml = '';
         let imageGroup = []; 
@@ -270,7 +287,7 @@ export class ChatArea {
                     src: img.src,
                     sender: msgObj.sender,
                     time: msgObj.createdAt,
-                    rawText: temp.innerText
+                    rawText: temp.innerText 
                 });
             });
 
@@ -285,38 +302,34 @@ export class ChatArea {
         };
 
         nodes.forEach(node => {
-            // Игнорируем пустые текстовые узлы
             if (node.nodeType === 3 && !node.textContent.trim()) return;
 
             if (node.nodeName === 'IMG') {
                 imageGroup.push(node);
             } 
             else if (node.nodeName === 'BR') {
-                // Если идет перенос строки, а у нас копятся картинки — игнорируем его
                 if (imageGroup.length === 0) resultHtml += '<br>';
             }
             else {
                 flushImages();
 
                 if (node.nodeType === 3) {
-                    // Текстовый узел
                     resultHtml += `<div class="text-part">${this.sanitizeHTML(node.textContent)}</div>`;
                 } else {
-                    // HTML узел (div, b, p и т.д.)
-                    // СОХРАНЯЕМ СТИЛИ (выравнивание)
+                    // Сохраняем стили
                     let styleAttr = '';
                     if (node.getAttribute && node.getAttribute('style')) {
                         styleAttr = ` style="${node.getAttribute('style')}"`;
                     }
-                    
                     const cleanInner = this.sanitizeHTML(node.innerHTML);
-                    resultHtml += `<div class="text-part"${styleAttr}>${cleanInner}</div>`;
+                    if (cleanInner.trim() || node.tagName === 'HR') {
+                        resultHtml += `<div class="text-part"${styleAttr}>${cleanInner}</div>`;
+                    }
                 }
             }
         });
 
         flushImages();
-        
         if (!resultHtml) return '<span style="opacity:0.5; font-style:italic;">Пустое сообщение</span>';
         return resultHtml;
     }
