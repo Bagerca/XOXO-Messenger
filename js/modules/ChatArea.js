@@ -197,7 +197,6 @@ export class ChatArea {
             row.id = `msg-${msg.id}`;
             row.dataset.msg = encodeURIComponent(JSON.stringify(msg));
 
-            // Форматируем сообщение (текст + сетка + парсинг)
             const formattedContent = this.formatMessage(msg.text, msg);
 
             const time = new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -219,16 +218,23 @@ export class ChatArea {
             
             row.querySelectorAll('.spoiler').forEach(sp => sp.addEventListener('click', () => sp.classList.toggle('revealed')));
             
-            // Навешиваем клик на элементы сетки
+            // --- ФИКС КЛИКА ПО ФОТО ---
+            // 1. Ищем элементы сетки (.media-item)
             row.querySelectorAll('.media-item').forEach(item => {
-                item.onclick = (e) => {
+                const open = (e) => {
                     e.stopPropagation();
                     const idx = parseInt(item.getAttribute('data-idx'));
                     this.openLightbox(idx);
                 };
+                
+                item.onclick = open;
+                
+                // ВАЖНО: Если внутри есть картинка (случай 1 фото), вешаем клик и на нее
+                const innerImg = item.querySelector('img');
+                if(innerImg) innerImg.onclick = open;
             });
 
-            // Навешиваем клик на одиночные картинки
+            // 2. Ищем одиночные картинки, которые НЕ попали в сетку (страховка)
             row.querySelectorAll('img').forEach(img => {
                 if(!img.closest('.avatar') && !img.closest('.media-item')) {
                     const idx = this.galleryImages.findIndex(x => x.src === img.src);
@@ -242,25 +248,22 @@ export class ChatArea {
         this.container.scrollTop = this.container.scrollHeight;
     }
 
-    // УМНЫЙ ПАРСЕР V3 (Поддержка Text -> Grid -> Text)
+    // УМНЫЙ ПАРСЕР V3
     formatMessage(rawHtml, msgObj) {
         const temp = document.createElement('div');
         temp.innerHTML = rawHtml;
 
-        // ШАГ 0: "Разворачиваем" картинки
+        // ШАГ 0: Unwrap
         const allImages = temp.querySelectorAll('img');
         allImages.forEach(img => {
             let parent = img.parentElement;
-            // Поднимаемся вверх, пока мы внутри temp
             while (parent && parent !== temp) {
-                // Проверяем, есть ли в родителе текст
                 const hasText = Array.from(parent.childNodes).some(n => 
                     (n.nodeType === 3 && n.textContent.trim().length > 0) || 
                     (n.nodeType === 1 && n.tagName !== 'IMG' && n.tagName !== 'BR' && n.innerText.trim().length > 0)
                 );
 
                 if (!hasText) {
-                    // Текста нет -> это контейнер для медиа. Разворачиваем его.
                     while (parent.firstChild) {
                         parent.parentNode.insertBefore(parent.firstChild, parent);
                     }
@@ -273,7 +276,6 @@ export class ChatArea {
             }
         });
 
-        // ШАГ 1: Линейный проход
         const nodes = Array.from(temp.childNodes);
         let resultHtml = '';
         let imageGroup = []; 
@@ -312,11 +314,9 @@ export class ChatArea {
             }
             else {
                 flushImages();
-
                 if (node.nodeType === 3) {
                     resultHtml += `<div class="text-part">${this.sanitizeHTML(node.textContent)}</div>`;
                 } else {
-                    // Сохраняем стили
                     let styleAttr = '';
                     if (node.getAttribute && node.getAttribute('style')) {
                         styleAttr = ` style="${node.getAttribute('style')}"`;
@@ -330,6 +330,7 @@ export class ChatArea {
         });
 
         flushImages();
+        
         if (!resultHtml) return '<span style="opacity:0.5; font-style:italic;">Пустое сообщение</span>';
         return resultHtml;
     }
