@@ -2,11 +2,11 @@
    SIDEBAR (Левая панель)
    ============================ */
 .sidebar {
-    width: 320px; /* Увеличили ширину (было 300px) */
+    width: 320px;
     background: rgba(10, 10, 18, 0.98);
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
-    padding: 20px 16px; /* Чуть больше отступы по бокам */
+    padding: 20px 16px;
     flex-shrink: 0;
     z-index: 10;
     user-select: none;
@@ -38,7 +38,7 @@
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    height: 60%; /* Чуть аккуратнее */
+    height: 60%; 
     width: 4px;
     background: #8A2BE2;
     border-radius: 0 4px 4px 0;
@@ -67,55 +67,104 @@
     background: transparent; border: none; padding: 12px 14px;
     border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: left;
     color: #888;
-    box-sizing: border-box; /* Важно, чтобы паддинги не ломали ширину */
+    box-sizing: border-box;
 }
 
+/* Hover применяется ТОЛЬКО если элемент НЕ активен */
 .nav-item-lg:not(.active):hover {
     background: rgba(255,255,255,0.04);
     color: #ccc;
 }
 
 .nav-icon-box {
-    width: 40px; height: 40px; /* Увеличили иконки */
+    width: 40px; height: 40px;
     border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     color: white; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     font-size: 20px;
 }
 .nav-text { display: flex; flex-direction: column; overflow: hidden; }
-.nav-title { font-weight: 700; font-size: 15px; transition: 0.2s; } /* Шрифт крупнее */
+.nav-title { font-weight: 700; font-size: 15px; transition: 0.2s; }
 .nav-desc { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500; }
 
 
 /* ============================
-   МЕНЮ СОЗДАНИЯ
+   МЕНЮ СОЗДАНИЯ (PREMIUM LOOK)
    ============================ */
-.rooms-divider {
+.rooms-section-header {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0 8px 10px 8px; 
-    font-size: 11px; font-weight: 800; color: #666; 
-    letter-spacing: 1px; text-transform: uppercase;
+    padding: 15px 4px 10px 4px;
+    margin-bottom: 5px;
 }
+
+.section-title {
+    font-size: 11px; 
+    font-weight: 800; 
+    color: rgba(255, 255, 255, 0.4); 
+    text-transform: uppercase; 
+    letter-spacing: 1.5px; 
+    padding-left: 8px;
+}
+
 .create-menu-wrapper { position: relative; }
 
-#btn-create-menu {
-    background: none; border: none; color: #777; font-size: 20px; 
-    cursor: pointer; line-height: 1; padding: 0; transition: 0.2s;
+/* Кнопка Плюс */
+.btn-add-new {
+    width: 28px; height: 28px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
-#btn-create-menu:hover { color: var(--primary); transform: scale(1.1); }
 
+.btn-add-new:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 0 12px rgba(138, 43, 226, 0.4);
+    transform: rotate(90deg);
+}
+
+/* Выпадающее меню */
 .create-dropdown {
-    position: absolute; top: 25px; right: 0; width: 180px;
-    background: #1a1a2e; border: 1px solid var(--border); border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100;
-    opacity: 0; visibility: hidden; transform: translateY(-10px); transition: 0.2s;
-    display: flex; flex-direction: column; overflow: hidden;
+    position: absolute; top: 35px; right: -5px; width: 200px;
+    background: rgba(20, 20, 35, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+    z-index: 100;
+    opacity: 0; visibility: hidden; 
+    transform: translateY(-10px) scale(0.95);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    padding: 6px;
+    display: flex; flex-direction: column; gap: 2px;
 }
-.create-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
+
+.create-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+
 .dropdown-item {
-    padding: 12px 16px; font-size: 14px; font-weight: 600; color: #ccc; cursor: pointer; transition: 0.2s;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px; border-radius: 10px;
+    cursor: pointer; transition: 0.2s;
 }
-.dropdown-item:hover { background: rgba(255,255,255,0.05); color: white; }
+.dropdown-item:hover { background: rgba(255, 255, 255, 0.08); }
+
+.icon-box {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+}
+.cat-icon { color: #FFD700; }
+.chat-icon { color: #00f2ff; }
+
+.dd-text { display: flex; flex-direction: column; }
+.dd-title { font-size: 13px; font-weight: 600; color: #fff; }
+.dd-desc { font-size: 10px; color: #777; }
 
 
 /* ============================
@@ -124,11 +173,11 @@
 .rooms-nav {
     flex: 1; 
     overflow-y: auto; 
-    overflow-x: hidden; /* Убираем горизонтальный скролл */
+    overflow-x: hidden;
     padding-right: 4px; 
     display: flex; flex-direction: column; gap: 6px;
     padding-bottom: 50px;
-    width: 100%; /* Гарантируем, что не вылезет */
+    width: 100%;
 }
 .rooms-nav::-webkit-scrollbar { width: 4px; }
 .rooms-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
@@ -145,51 +194,69 @@
    ============================ */
 .category-container {
     display: flex; flex-direction: column; 
-    margin-top: 12px; margin-bottom: 4px;
+    margin-top: 15px; margin-bottom: 5px;
     border-radius: 12px; transition: 0.2s;
     position: relative;
     width: 100%;
 }
 
-.category-container.drag-over-insert {
-    background: rgba(138,43,226, 0.15);
-    box-shadow: inset 0 0 0 2px rgba(138,43,226, 0.3);
-}
-
-.category-container.drop-above::before {
-    content: ''; position: absolute; top: -6px; left: 0; right: 0; height: 4px;
-    background: var(--primary); border-radius: 2px;
-    box-shadow: 0 0 8px var(--primary); z-index: 10; pointer-events: none;
-}
-.category-container.drop-below::after {
-    content: ''; position: absolute; bottom: -6px; left: 0; right: 0; height: 4px;
-    background: var(--primary); border-radius: 2px;
-    box-shadow: 0 0 8px var(--primary); z-index: 10; pointer-events: none;
-}
-
-.category-container.dragging {
-    opacity: 0.4;
-    transform: scale(0.98);
-}
-
+/* Заголовок категории */
 .category-header {
-    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-    font-size: 11px; /* Увеличили шрифт */
-    font-weight: 800; color: rgba(255,255,255,0.4);
-    text-transform: uppercase; letter-spacing: 1px; 
-    cursor: grab; transition: 0.2s;
+    display: flex; align-items: center; gap: 8px; 
+    padding: 8px 10px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+    border-radius: 8px;
+    
+    font-size: 11px; font-weight: 700; 
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase; letter-spacing: 0.5px; 
+    
+    cursor: grab; transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.category-header:hover { 
+    color: #fff; 
+    background: rgba(255,255,255,0.06); 
+    border-color: rgba(255,255,255,0.05);
 }
 .category-header:active { cursor: grabbing; }
-.category-header:hover { 
-    color: rgba(255,255,255,0.9); 
-    background: rgba(255,255,255,0.03); 
-    border-radius: 8px; 
-}
 
-.cat-arrow { font-size: 9px; transition: 0.2s; display: inline-block; width: 12px; text-align: center; cursor: pointer; }
+.cat-arrow { 
+    font-size: 9px; transition: 0.3s; 
+    display: flex; align-items: center; justify-content: center; 
+    width: 14px; height: 14px; 
+    background: rgba(255,255,255,0.1); 
+    border-radius: 4px;
+    color: #aaa;
+}
+.category-header:hover .cat-arrow { background: var(--primary); color: white; }
+
 .category-container.collapsed .cat-arrow { transform: rotate(-90deg); }
 .category-container.collapsed .category-rooms { display: none; }
-.category-rooms { display: flex; flex-direction: column; gap: 4px; min-height: 5px; }
+
+.category-rooms { 
+    display: flex; flex-direction: column; gap: 4px; 
+    min-height: 5px; 
+    padding-left: 4px; /* Вложенность */
+    margin-top: 4px;
+    border-left: 1px solid rgba(255,255,255,0.03); /* Линия дерева */
+}
+
+/* Drag & Drop Visuals */
+.category-container.drag-over-insert {
+    background: rgba(138,43,226, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(138,43,226, 0.4);
+}
+.category-container.drop-above::before {
+    content: ''; position: absolute; top: -8px; left: 0; right: 0; height: 2px;
+    background: var(--primary); box-shadow: 0 0 10px var(--primary); z-index: 10; pointer-events: none;
+}
+.category-container.drop-below::after {
+    content: ''; position: absolute; bottom: -8px; left: 0; right: 0; height: 2px;
+    background: var(--primary); box-shadow: 0 0 10px var(--primary); z-index: 10; pointer-events: none;
+}
+.category-container.dragging { opacity: 0.4; transform: scale(0.98); }
 
 
 /* ============================
@@ -197,10 +264,10 @@
    ============================ */
 .room-item {
     display: flex; align-items: center; gap: 12px; width: 100%;
-    background: transparent; border: none; padding: 10px 10px; /* Увеличили паддинг */
+    background: transparent; border: none; padding: 10px 10px;
     border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: left;
     color: #888;
-    box-sizing: border-box; /* Чтобы паддинг не растягивал ширину */
+    box-sizing: border-box;
 }
 
 .room-item:not(.active):hover { 
@@ -212,7 +279,7 @@
 .room-item:active { cursor: grabbing; }
 
 .room-avatar {
-    width: 44px; height: 44px; /* Увеличили аватарку (было 32px) */
+    width: 44px; height: 44px;
     border-radius: 14px;
     background-size: cover; background-position: center; background-color: #222;
     display: flex; align-items: center; justify-content: center;
@@ -227,16 +294,12 @@
 }
 
 .room-name { 
-    font-size: 15px; /* Увеличили шрифт названия */
-    font-weight: 600; 
+    font-size: 15px; font-weight: 600; 
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
     transition: 0.2s; 
 }
 
-.room-meta { 
-    font-size: 12px; /* Увеличили мета-текст */
-    color: #555; white-space: nowrap; 
-}
+.room-meta { font-size: 12px; color: #555; white-space: nowrap; }
 
 /* DnD Placeholder */
 .dnd-placeholder {
