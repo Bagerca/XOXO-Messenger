@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XOXO V2</title>
+    <link rel="stylesheet" href="css/app.css?v=NEW_BUILD">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="app-layout">
+        
+        <!-- САЙДБАР -->
+        <aside class="sidebar">
+            <div class="logo">XOXO <span style="color:#8A2BE2">V2</span></div>
+            
+            <nav class="rooms-nav">
+                <button class="active"># Общий холл</button>
+                <button># Флудилка</button>
+            </nav>
+
+            <div class="me-panel">
+                <div id="my-avatar-3d" class="avatar-container"></div>
+                <div id="my-name" class="my-name">Loading...</div>
+            </div>
+        </aside>
+
+        <!-- ЧАТ -->
+        <main class="chat-area">
+            <header class="chat-header">
+                <h2 id="room-title"># Загрузка...</h2>
+            </header>
+
+            <!-- КОНТЕЙНЕР СООБЩЕНИЙ -->
+            <div id="chat-messages-area" class="messages-list">
+                <!-- Сообщения появятся тут -->
+            </div>
+
+            <!-- ВВОД -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="msg-input" placeholder="Написать сообщение..." autocomplete="off">
+                    <button id="send-btn">➤</button>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Модули -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
