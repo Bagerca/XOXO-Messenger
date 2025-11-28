@@ -33,18 +33,6 @@ export class RightSidebar {
         this.btnToggleMedia.addEventListener('click', () => {
             this.mediaGrid.classList.toggle('collapsed');
         });
-
-        // Слушаем выбор комнаты
-        document.addEventListener('room-selected', (e) => {
-            this.loadRoom(e.detail);
-        });
-
-        // Слушаем сообщения (чтобы обновлять медиа)
-        // Но так как ChatArea рендерит сообщения, мы можем сделать проще:
-        // Подпишемся на те же сообщения или распарсим DOM, если хотим сэкономить чтения.
-        // Правильнее - сделать отдельную подписку или передавать данные из ChatArea.
-        // Для MVP: При выборе комнаты мы получаем её ID, и загрузим участников.
-        // Медиа загрузим, подписавшись на сообщения в этом классе (это добавит чтений, но это чисто)
     }
 
     async loadRoom(room) {
@@ -52,7 +40,12 @@ export class RightSidebar {
         
         // 1. Рендер инфо
         this.roomName.innerText = room.name;
-        this.roomType.innerText = room.type === 'private' ? 'Закрытая группа' : 'Публичная группа';
+        
+        if (room.id === 'general') {
+            this.roomType.innerText = 'Все пользователи';
+        } else {
+            this.roomType.innerText = room.type === 'private' ? 'Закрытая группа' : 'Публичная группа';
+        }
         
         if (room.avatar && room.avatar.startsWith('http')) {
             this.roomAvatar.style.backgroundImage = `url('${room.avatar}')`;
@@ -62,11 +55,13 @@ export class RightSidebar {
             this.roomAvatar.innerText = "#";
         }
 
-        // Открываем панель (опционально)
-        // this.el.classList.remove('closed');
-
         // 2. Загрузка участников
-        this.loadMembers(room.members || []);
+        // Если это GENERAL (в app.js мы передаем null для members в этом случае) -> грузим всех
+        if (room.id === 'general' || !room.members) {
+            this.loadAllUsers();
+        } else {
+            this.loadMembers(room.members);
+        }
 
         // 3. Загрузка медиа (подписка)
         if (this.unsubMedia) this.unsubMedia();
@@ -75,12 +70,22 @@ export class RightSidebar {
         });
     }
 
+    async loadAllUsers() {
+        this.membersList.innerHTML = '<div style="text-align:center; color:#555; font-size:12px; padding:10px;">Загрузка всех...</div>';
+        const users = await ChatService.getAllUsers();
+        this.membersCount.innerText = `(${users.length})`;
+        this.renderMembersHTML(users);
+    }
+
     async loadMembers(memberIds) {
         this.membersList.innerHTML = '<div style="text-align:center; color:#555; font-size:12px; padding:10px;">Загрузка...</div>';
         this.membersCount.innerText = `(${memberIds.length})`;
 
         const users = await ChatService.getUsersByIds(memberIds);
-        
+        this.renderMembersHTML(users);
+    }
+
+    renderMembersHTML(users) {
         this.membersList.innerHTML = '';
         users.forEach(user => {
             const card = document.createElement('div');
@@ -122,7 +127,7 @@ export class RightSidebar {
 
         // Парсим сообщения на наличие картинок
         messages.forEach(msg => {
-            if (msg.text.includes('<img')) {
+            if (msg.text && msg.text.includes('<img')) {
                 const temp = document.createElement('div');
                 temp.innerHTML = msg.text;
                 const imgs = temp.querySelectorAll('img');
@@ -135,8 +140,9 @@ export class RightSidebar {
             return;
         }
 
-        // Показываем последние 9
-        images.reverse().slice(0, 9).forEach(src => {
+        // Показываем последние 9 (новые сверху, значит берем с конца, если массив отсортирован по дате по возрастанию)
+        // В ChatService мы сортируем 'asc' (старые сверху), значит reverse() нужен
+        [...images].reverse().slice(0, 9).forEach(src => {
             const el = document.createElement('div');
             el.className = 'rs-media-item';
             el.style.backgroundImage = `url('${src}')`;
