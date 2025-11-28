@@ -4,16 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XOXO V2</title>
-    <link rel="stylesheet" href="css/app.css?v=NEW_BUILD">
+    <!-- Фавиконка -->
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <link rel="stylesheet" href="css/app.css?v=logo_update">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <div class="app-layout">
         
-        <!-- САЙДБАР -->
         <aside class="sidebar">
-            <div class="logo">XOXO <span style="color:#8A2BE2">V2</span></div>
+            <!-- ЛОГОТИП В САЙДБАРЕ -->
+            <div class="logo-container">
+                <img src="logo.svg" alt="XOXO" class="sidebar-logo">
+                <div class="logo-text">XOXO <span style="color:#8A2BE2">V2</span></div>
+            </div>
             
             <nav class="rooms-nav">
                 <button class="active"># Общий холл</button>
@@ -26,18 +31,13 @@
             </div>
         </aside>
 
-        <!-- ЧАТ -->
         <main class="chat-area">
             <header class="chat-header">
                 <h2 id="room-title"># Загрузка...</h2>
             </header>
 
-            <!-- КОНТЕЙНЕР СООБЩЕНИЙ -->
-            <div id="chat-messages-area" class="messages-list">
-                <!-- Сообщения появятся тут -->
-            </div>
+            <div id="chat-messages-area" class="messages-list"></div>
 
-            <!-- ВВОД -->
             <div class="input-area">
                 <div class="input-wrapper">
                     <input type="text" id="msg-input" placeholder="Написать сообщение..." autocomplete="off">
@@ -48,7 +48,6 @@
 
     </div>
 
-    <!-- Модули -->
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
