@@ -12,34 +12,19 @@
 .logo-text { font-size: 22px; font-weight: 800; }
 
 /* --- АКТИВНЫЙ ЭЛЕМЕНТ (GLITCH STYLE) --- */
-/* Общий миксин для активных кнопок (Home, Saved, Rooms) */
 .nav-item-lg.active, .room-item.active {
     background: linear-gradient(90deg, rgba(138,43,226,0.25) 0%, transparent 100%);
     position: relative;
-    border-radius: 8px; /* Немного скруглим углы контейнера */
+    border-radius: 8px;
 }
-
-/* Фиолетовая полоска слева (как на скрине) */
 .nav-item-lg.active::before, .room-item.active::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 70%; /* Не на всю высоту */
-    width: 4px;
-    background: #8A2BE2;
-    border-radius: 0 4px 4px 0;
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    height: 70%; width: 4px; background: #8A2BE2; border-radius: 0 4px 4px 0;
     box-shadow: 0 0 10px #8A2BE2;
 }
-
-/* Глич-эффект для текста активного элемента */
-.nav-item-lg.active .nav-title, 
-.room-item.active .room-name {
-    color: white;
-    text-shadow: 2px 0 rgba(255,0,0,0.5), -2px 0 rgba(0,255,255,0.5);
-    font-weight: 800;
-    letter-spacing: 0.5px;
+.nav-item-lg.active .nav-title, .room-item.active .room-name {
+    color: white; text-shadow: 2px 0 rgba(255,0,0,0.5), -2px 0 rgba(0,255,255,0.5);
+    font-weight: 800; letter-spacing: 0.5px;
 }
 
 /* --- ЗАКРЕПЛЕННЫЕ --- */
@@ -47,56 +32,68 @@
 .nav-item-lg {
     display: flex; align-items: center; gap: 12px; width: 100%;
     background: transparent; border: none; padding: 10px 12px;
-    border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: left;
-    color: #888; /* Серый по умолчанию */
+    border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: left; color: #888;
 }
 .nav-item-lg:hover { background: rgba(255,255,255,0.04); color: #ccc; }
-
 .nav-icon-box {
     width: 36px; height: 36px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    color: white; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    font-size: 18px;
+    color: white; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-size: 18px;
 }
 .nav-text { display: flex; flex-direction: column; overflow: hidden; }
 .nav-title { font-weight: 600; font-size: 14px; transition: 0.2s; }
 
-
 /* --- СПИСОК КОМНАТ --- */
 .rooms-nav {
     flex: 1; overflow-y: auto; padding-right: 4px; 
-    display: flex; flex-direction: column; gap: 4px;
-    padding-bottom: 50px; /* Место внизу для дропа */
+    display: flex; flex-direction: column; gap: 4px; padding-bottom: 50px;
 }
 .rooms-nav::-webkit-scrollbar { width: 4px; }
 .rooms-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
-/* Подсветка зоны дропа (когда тащим чат в корень) */
+/* Зона дропа для рута (чаты без категории) */
 .rooms-nav.drag-over-root {
     background: rgba(255, 255, 255, 0.02);
     border-radius: 12px;
     box-shadow: inset 0 0 0 2px rgba(138,43,226, 0.2);
 }
 
-/* Категория */
+/* --- КАТЕГОРИИ --- */
 .category-container {
     display: flex; flex-direction: column; 
     margin-top: 10px; margin-bottom: 2px;
     border-radius: 12px; transition: 0.2s;
+    /* Чтобы можно было хватать за заголовок */
 }
-.category-container.drag-over {
+
+/* 1. Если тащим ЧАТ над категорией (вставка внутрь) */
+.category-container.drag-over-insert {
     background: rgba(138,43,226, 0.15);
     box-shadow: inset 0 0 0 2px rgba(138,43,226, 0.3);
+}
+
+/* 2. Если тащим КАТЕГОРИЮ над категорией (смена порядка) */
+.category-container.drag-over-swap {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    opacity: 0.7;
+}
+
+/* При перетаскивании самой категории делаем её полупрозрачной */
+.category-container.dragging {
+    opacity: 0.4;
 }
 
 .category-header {
     display: flex; align-items: center; gap: 6px; padding: 6px 8px;
     font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.3);
     text-transform: uppercase; letter-spacing: 1px; 
-    cursor: pointer; transition: 0.2s;
+    cursor: grab; /* Курсор руки, чтобы показать что можно тащить */
+    transition: 0.2s;
 }
-.category-header:hover { color: rgba(255,255,255,0.8); }
-.cat-arrow { font-size: 8px; transition: 0.2s; display: inline-block; width: 10px; text-align: center; }
+.category-header:active { cursor: grabbing; }
+.category-header:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.02); border-radius: 8px; }
+
+.cat-arrow { font-size: 8px; transition: 0.2s; display: inline-block; width: 10px; text-align: center; cursor: pointer; }
 .category-container.collapsed .cat-arrow { transform: rotate(-90deg); }
 .category-container.collapsed .category-rooms { display: none; }
 .category-rooms { display: flex; flex-direction: column; gap: 2px; min-height: 5px; }
@@ -106,11 +103,9 @@
     display: flex; align-items: center; gap: 10px; width: 100%;
     background: transparent; border: none; padding: 8px 10px;
     border-radius: 10px; cursor: pointer; transition: 0.2s; text-align: left;
-    color: #888; /* Серый текст неактивных чатов */
+    color: #888;
 }
 .room-item:hover { background: rgba(255,255,255,0.03); color: #ddd; }
-
-/* DnD */
 .room-item[draggable="true"] { cursor: grab; }
 .room-item:active { cursor: grabbing; }
 
