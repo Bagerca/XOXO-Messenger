@@ -16,6 +16,8 @@
     background: linear-gradient(90deg, rgba(138,43,226,0.25) 0%, transparent 100%);
     position: relative;
     border-radius: 8px;
+    /* Убираем влияние hover на цвет текста активного элемента */
+    color: white !important; 
 }
 .nav-item-lg.active::before, .room-item.active::before {
     content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
@@ -34,7 +36,13 @@
     background: transparent; border: none; padding: 10px 12px;
     border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: left; color: #888;
 }
-.nav-item-lg:hover { background: rgba(255,255,255,0.04); color: #ccc; }
+
+/* ИСПРАВЛЕНИЕ: Hover работает только если элемент НЕ активен */
+.nav-item-lg:not(.active):hover { 
+    background: rgba(255,255,255,0.04); 
+    color: #ccc; 
+}
+
 .nav-icon-box {
     width: 36px; height: 36px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
@@ -51,7 +59,7 @@
 .rooms-nav::-webkit-scrollbar { width: 4px; }
 .rooms-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
-/* Зона дропа для рута (чаты без категории) */
+/* Зона дропа для рута */
 .rooms-nav.drag-over-root {
     background: rgba(255, 255, 255, 0.02);
     border-radius: 12px;
@@ -63,54 +71,29 @@
     display: flex; flex-direction: column; 
     margin-top: 10px; margin-bottom: 2px;
     border-radius: 12px; transition: 0.2s;
-    position: relative; /* Важно для позиционирования линий */
+    position: relative;
 }
 
-/* 1. Если тащим ЧАТ внутрь категории (подсветка фона) */
+/* Drag visual states */
 .category-container.drag-over-insert {
     background: rgba(138,43,226, 0.15);
     box-shadow: inset 0 0 0 2px rgba(138,43,226, 0.3);
 }
-
-/* 2. Если тащим КАТЕГОРИЮ (Линии сортировки) */
-/* Полоска сверху */
 .category-container.drop-above::before {
-    content: '';
-    position: absolute;
-    top: -6px; left: 0; right: 0;
-    height: 4px;
-    background: var(--primary);
-    border-radius: 2px;
-    box-shadow: 0 0 8px var(--primary);
-    z-index: 10;
-    pointer-events: none;
+    content: ''; position: absolute; top: -6px; left: 0; right: 0; height: 4px;
+    background: var(--primary); border-radius: 2px; box-shadow: 0 0 8px var(--primary); z-index: 10; pointer-events: none;
 }
-
-/* Полоска снизу */
 .category-container.drop-below::after {
-    content: '';
-    position: absolute;
-    bottom: -6px; left: 0; right: 0;
-    height: 4px;
-    background: var(--primary);
-    border-radius: 2px;
-    box-shadow: 0 0 8px var(--primary);
-    z-index: 10;
-    pointer-events: none;
+    content: ''; position: absolute; bottom: -6px; left: 0; right: 0; height: 4px;
+    background: var(--primary); border-radius: 2px; box-shadow: 0 0 8px var(--primary); z-index: 10; pointer-events: none;
 }
-
-/* При перетаскивании самой категории делаем её полупрозрачной */
-.category-container.dragging {
-    opacity: 0.4;
-    transform: scale(0.98);
-}
+.category-container.dragging { opacity: 0.4; transform: scale(0.98); }
 
 .category-header {
     display: flex; align-items: center; gap: 6px; padding: 6px 8px;
     font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.3);
     text-transform: uppercase; letter-spacing: 1px; 
-    cursor: grab; 
-    transition: 0.2s;
+    cursor: grab; transition: 0.2s;
 }
 .category-header:active { cursor: grabbing; }
 .category-header:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.02); border-radius: 8px; }
@@ -127,7 +110,13 @@
     border-radius: 10px; cursor: pointer; transition: 0.2s; text-align: left;
     color: #888;
 }
-.room-item:hover { background: rgba(255,255,255,0.03); color: #ddd; }
+
+/* ИСПРАВЛЕНИЕ: Hover работает только если элемент НЕ активен */
+.room-item:not(.active):hover { 
+    background: rgba(255,255,255,0.03); 
+    color: #ddd; 
+}
+
 .room-item[draggable="true"] { cursor: grab; }
 .room-item:active { cursor: grabbing; }
 
