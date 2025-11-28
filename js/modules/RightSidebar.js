@@ -4,7 +4,6 @@ export class RightSidebar {
     constructor(currentUser) {
         this.currentUser = currentUser;
         
-        // Elements
         this.el = document.getElementById('right-sidebar');
         this.btnToggle = document.getElementById('btn-toggle-info');
         
@@ -24,12 +23,9 @@ export class RightSidebar {
     }
 
     init() {
-        // Toggle Sidebar
         this.btnToggle.addEventListener('click', () => {
             this.el.classList.toggle('closed');
         });
-
-        // Toggle Media Section
         this.btnToggleMedia.addEventListener('click', () => {
             this.mediaGrid.classList.toggle('collapsed');
         });
@@ -38,14 +34,11 @@ export class RightSidebar {
     async loadRoom(room) {
         this.currentRoom = room;
         
-        // 1. Рендер инфо
         this.roomName.innerText = room.name;
         
-        if (room.id === 'general') {
-            this.roomType.innerText = 'Все пользователи';
-        } else {
-            this.roomType.innerText = room.type === 'private' ? 'Закрытая группа' : 'Публичная группа';
-        }
+        if (room.id === 'general') this.roomType.innerText = 'Все пользователи';
+        else if (room.isDM) this.roomType.innerText = 'Личная переписка';
+        else this.roomType.innerText = room.type === 'private' ? 'Закрытая группа' : 'Публичная группа';
         
         if (room.avatar && room.avatar.startsWith('http')) {
             this.roomAvatar.style.backgroundImage = `url('${room.avatar}')`;
@@ -55,15 +48,12 @@ export class RightSidebar {
             this.roomAvatar.innerText = "#";
         }
 
-        // 2. Загрузка участников
-        // Если это GENERAL (в app.js мы передаем null для members в этом случае) -> грузим всех
         if (room.id === 'general' || !room.members) {
             this.loadAllUsers();
         } else {
             this.loadMembers(room.members);
         }
 
-        // 3. Загрузка медиа (подписка)
         if (this.unsubMedia) this.unsubMedia();
         this.unsubMedia = ChatService.subscribeToMessages(room.id, (msgs) => {
             this.renderMedia(msgs);
@@ -80,7 +70,6 @@ export class RightSidebar {
     async loadMembers(memberIds) {
         this.membersList.innerHTML = '<div style="text-align:center; color:#555; font-size:12px; padding:10px;">Загрузка...</div>';
         this.membersCount.innerText = `(${memberIds.length})`;
-
         const users = await ChatService.getUsersByIds(memberIds);
         this.renderMembersHTML(users);
     }
@@ -91,13 +80,9 @@ export class RightSidebar {
             const card = document.createElement('div');
             card.className = 'member-card';
             
-            // Баннер (если есть)
             const bannerStyle = (user.banner && user.banner !== 'none') ? `background-image: url('${user.banner}');` : '';
-            
-            // Аватар
             const avatarUrl = user.avatar || 'avatars/Ari LoL.png';
             
-            // Эффект (иконка)
             let effectIcon = '';
             if(user.effect === 'glitch') effectIcon = '⚡';
             if(user.effect === 'pixel') effectIcon = '👾';
@@ -117,6 +102,23 @@ export class RightSidebar {
                 <div class="shader-icon" title="Shader: ${user.effect}">${effectIcon}</div>
             `;
             
+            // НОВОЕ: Открытие лички
+            card.style.cursor = "pointer";
+            card.addEventListener('click', async () => {
+                if (user.uid === this.currentUser.uid) return;
+                
+                card.style.opacity = "0.5";
+                try {
+                    const dmRoom = await ChatService.getOrCreateDirectChat(this.currentUser.uid, user.uid);
+                    document.dispatchEvent(new CustomEvent('room-selected', { detail: dmRoom }));
+                    if (window.innerWidth < 1000) this.el.classList.add('closed');
+                } catch (e) {
+                    console.error(e);
+                } finally {
+                    card.style.opacity = "1";
+                }
+            });
+            
             this.membersList.appendChild(card);
         });
     }
@@ -124,8 +126,6 @@ export class RightSidebar {
     renderMedia(messages) {
         this.mediaGrid.innerHTML = '';
         const images = [];
-
-        // Парсим сообщения на наличие картинок
         messages.forEach(msg => {
             if (msg.text && msg.text.includes('<img')) {
                 const temp = document.createElement('div');
@@ -140,8 +140,6 @@ export class RightSidebar {
             return;
         }
 
-        // Показываем последние 9 (новые сверху, значит берем с конца, если массив отсортирован по дате по возрастанию)
-        // В ChatService мы сортируем 'asc' (старые сверху), значит reverse() нужен
         [...images].reverse().slice(0, 9).forEach(src => {
             const el = document.createElement('div');
             el.className = 'rs-media-item';
