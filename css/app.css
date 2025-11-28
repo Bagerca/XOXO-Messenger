@@ -1,0 +1,154 @@
+:root {
+    --bg-dark: #050511;
+    --bg-panel: #101021;
+    --primary: #8A2BE2;
+    --text: #ffffff;
+    --bubble-me: linear-gradient(135deg, #8A2BE2, #6a11cb);
+    --bubble-them: #1e1e2d;
+}
+
+body, html { margin: 0; padding: 0; height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg-dark); color: var(--text); overflow: hidden; }
+
+/* --- ЛЕЙАУТ --- */
+.app-layout {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+/* --- САЙДБАР --- */
+.sidebar {
+    width: 260px;
+    background: rgba(16, 16, 33, 0.95);
+    border-right: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+.logo { font-size: 24px; font-weight: 800; margin-bottom: 30px; }
+.rooms-nav button {
+    display: block; width: 100%; text-align: left; background: none; border: none;
+    color: #888; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: 600;
+}
+.rooms-nav button.active { background: rgba(138,43,226,0.1); color: var(--primary); }
+
+.me-panel { margin-top: auto; display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; }
+.avatar-container { width: 40px; height: 40px; border-radius: 8px; overflow: hidden; background: #000; }
+.my-name { font-weight: bold; font-size: 14px; }
+
+
+/* --- ЧАТ ЗОНА (FIXED FLEXBOX) --- */
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column; /* Вертикальный стек */
+    position: relative;
+    background: radial-gradient(circle at center, rgba(138,43,226,0.05), transparent 70%);
+}
+
+.chat-header {
+    height: 60px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    flex-shrink: 0; /* Заголовок не сжимается */
+    background: rgba(5,5,17,0.8);
+    backdrop-filter: blur(10px);
+}
+
+/* КОНТЕЙНЕР СООБЩЕНИЙ - ГЛАВНЫЙ ФИКС */
+.messages-list {
+    flex: 1;              /* Занимает все доступное место */
+    overflow-y: auto;     /* Скролл только тут */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;            /* Отступы между сообщениями */
+    justify-content: flex-start; /* Прижимаем к верху */
+}
+
+/* СТРОКА СООБЩЕНИЯ */
+.message-row {
+    display: flex;
+    align-items: flex-end; /* Аватарка внизу */
+    gap: 10px;
+    flex-shrink: 0;        /* ЗАПРЕТ НА СЖАТИЕ */
+}
+
+.message-row.me { flex-direction: row-reverse; }
+
+.avatar {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background-size: cover;
+    flex-shrink: 0;
+}
+
+.bubble-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: 60%;
+}
+.message-row.me .bubble-wrapper { align-items: flex-end; }
+
+.name { font-size: 11px; color: #888; margin-bottom: 4px; margin-left: 4px; }
+
+.bubble {
+    padding: 10px 14px;
+    border-radius: 16px;
+    position: relative;
+    color: white;
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word; /* Перенос слов */
+}
+
+/* Цвета пузырей */
+.message-row.them .bubble {
+    background: var(--bubble-them);
+    border-radius: 4px 16px 16px 4px;
+}
+.message-row.me .bubble {
+    background: var(--bubble-me);
+    border-radius: 16px 4px 4px 16px;
+}
+
+.time {
+    font-size: 9px;
+    opacity: 0.6;
+    text-align: right;
+    margin-top: 4px;
+}
+
+/* --- ВВОД --- */
+.input-area {
+    padding: 20px;
+    flex-shrink: 0; /* Не сжимать */
+}
+.input-wrapper {
+    background: rgba(255,255,255,0.05);
+    border-radius: 30px;
+    padding: 5px 10px 5px 20px;
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.input-wrapper input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: white;
+    padding: 10px 0;
+    outline: none;
+}
+#send-btn {
+    width: 40px; height: 40px;
+    background: var(--primary);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+#send-btn:hover { opacity: 0.9; }
