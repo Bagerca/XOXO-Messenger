@@ -211,14 +211,20 @@ export class ChatArea {
             
             row.querySelectorAll('.spoiler').forEach(sp => sp.addEventListener('click', () => sp.classList.toggle('revealed')));
             
-            // Навешиваем клик на картинки для Lightbox
+            // Навешиваем клик на элементы сетки
+            row.querySelectorAll('.media-item').forEach(item => {
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt(item.getAttribute('data-idx'));
+                    this.openLightbox(idx);
+                };
+            });
+
+            // Навешиваем клик на одиночные картинки (если они не попали в сетку)
             row.querySelectorAll('img').forEach(img => {
-                if(!img.closest('.avatar')) {
-                    // Ищем эту картинку в галерее по src
-                    const imgIndex = this.galleryImages.findIndex(item => item.src === img.src);
-                    if(imgIndex !== -1) {
-                        img.onclick = () => this.openLightbox(imgIndex);
-                    }
+                if(!img.closest('.avatar') && !img.closest('.media-item')) {
+                    const idx = this.galleryImages.findIndex(x => x.src === img.src);
+                    if(idx !== -1) img.onclick = () => this.openLightbox(idx);
                 }
             });
 
@@ -228,43 +234,66 @@ export class ChatArea {
         this.container.scrollTop = this.container.scrollHeight;
     }
 
-    // МЕТОД ФОРМАТИРОВАНИЯ: Отделяет текст от картинок
+    // УМНЫЙ ПАРСЕР СООБЩЕНИЙ
     formatMessage(rawHtml, msgObj) {
         const temp = document.createElement('div');
         temp.innerHTML = rawHtml;
 
-        const images = Array.from(temp.querySelectorAll('img'));
-        
-        // Если картинок нет, возвращаем чистый HTML
-        if (images.length === 0) {
-            return this.sanitizeHTML(rawHtml);
-        }
+        const nodes = Array.from(temp.childNodes);
+        let resultHtml = '';
+        let imageGroup = []; 
 
-        // Заполняем галерею
-        images.forEach(img => {
-            this.galleryImages.push({
-                src: img.src,
-                sender: msgObj.sender,
-                time: msgObj.createdAt,
-                rawText: temp.innerText 
+        const flushImages = () => {
+            if (imageGroup.length === 0) return;
+
+            const startIndex = this.galleryImages.length;
+            
+            imageGroup.forEach(img => {
+                this.galleryImages.push({
+                    src: img.src,
+                    sender: msgObj.sender,
+                    time: msgObj.createdAt,
+                    rawText: temp.innerText
+                });
             });
+
+            let gridHtml = `<div class="media-grid" data-count="${imageGroup.length}">`;
+            imageGroup.forEach((img, i) => {
+                gridHtml += `<div class="media-item" data-idx="${startIndex + i}" style="background-image: url('${img.src}')"><img src="${img.src}"></div>`;
+            });
+            gridHtml += `</div>`;
+            
+            resultHtml += gridHtml;
+            imageGroup = []; 
+        };
+
+        nodes.forEach(node => {
+            if (node.nodeName === 'IMG') {
+                imageGroup.push(node);
+            } 
+            else {
+                const isWhitespace = node.nodeType === 3 && !node.textContent.trim();
+                const isBr = node.nodeName === 'BR';
+
+                // Игнорируем пробелы между картинками, чтобы они слипались
+                if ((isWhitespace || isBr) && imageGroup.length > 0) {
+                    return; 
+                }
+
+                flushImages();
+
+                if (node.nodeType === 3) {
+                    if (node.textContent.trim()) {
+                        resultHtml += `<div class="text-part">${this.sanitizeHTML(node.textContent)}</div>`;
+                    }
+                } else {
+                    resultHtml += node.outerHTML;
+                }
+            }
         });
 
-        // Убираем картинки из текста
-        images.forEach(img => img.remove());
-        let textContent = temp.innerHTML.replace(/<br\s*\/?>/gi, '').trim();
-        if (textContent) textContent = `<div>${this.sanitizeHTML(textContent)}</div>`;
-
-        // Строим сетку
-        let gridHtml = `<div class="media-grid" data-count="${images.length}">`;
-        images.forEach(img => {
-            // Для 1 картинки используем img тег (чтобы работали max-width/height из CSS)
-            // Для 2+ используем div с background (для кропа)
-            gridHtml += `<div class="media-item" style="background-image: url('${img.src}')"><img src="${img.src}"></div>`;
-        });
-        gridHtml += `</div>`;
-
-        return textContent + gridHtml;
+        flushImages();
+        return resultHtml;
     }
 
     // --- CONTEXT MENU & ACTIONS ---
