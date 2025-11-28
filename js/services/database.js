@@ -23,13 +23,20 @@ export const ChatService = {
         await updateDoc(ref, data);
     },
 
-    // --- КАТЕГОРИИ (НОВОЕ) ---
-    createCategory: async (name, order) => {
+    // --- КАТЕГОРИИ ---
+    createCategory: async (name) => {
+        // order = текущее время, чтобы новые падали вниз
         await addDoc(collection(db, "categories"), {
             name: name,
-            order: order || Date.now(), // Для сортировки
+            order: Date.now(), 
             createdAt: Date.now()
         });
+    },
+
+    // НОВОЕ: Обновление категории (например, для смены порядка)
+    updateCategory: async (catId, data) => {
+        const ref = doc(db, "categories", catId);
+        await updateDoc(ref, data);
     },
 
     subscribeToCategories: (callback) => {
@@ -41,14 +48,12 @@ export const ChatService = {
     },
 
     // --- КОМНАТЫ ---
-    
-    // Создание (теперь принимает categoryId)
     createRoom: async (data, creatorUid) => {
         await addDoc(collection(db, "rooms"), {
             name: data.name,
             type: data.type, 
             password: data.password || "",
-            categoryId: data.categoryId || "uncategorized", // ID категории
+            categoryId: data.categoryId || "root", // По умолчанию в корень
             avatar: data.avatar || "", 
             ownerId: creatorUid,
             members: [creatorUid],
@@ -56,7 +61,6 @@ export const ChatService = {
         });
     },
 
-    // Обновление комнаты (для редактирования и ПЕРЕТАСКИВАНИЯ)
     updateRoom: async (roomId, data) => {
         const ref = doc(db, "rooms", roomId);
         await updateDoc(ref, data);
