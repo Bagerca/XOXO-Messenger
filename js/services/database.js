@@ -1,6 +1,6 @@
 import { db } from "../config.js";
 import { 
-    collection, addDoc, query, where, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc
+    collection, addDoc, query, where, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 export const ChatService = {
@@ -11,7 +11,8 @@ export const ChatService = {
         if (snap.exists()) return snap.data();
         
         const defaultProfile = {
-            nickname: email.split('@')[0], avatar: "avatars/Ari LoL.png",
+            nickname: email.split('@')[0],
+            avatar: "avatars/Ari LoL.png",
             intensity: 0.3, status: "online", bio: "В сети", effect: 'liquid', frame: 'frame-none', banner: 'none'
         };
         await setDoc(ref, defaultProfile);
@@ -25,7 +26,6 @@ export const ChatService = {
 
     // --- КАТЕГОРИИ ---
     createCategory: async (name) => {
-        // order = текущее время, чтобы новые падали вниз
         await addDoc(collection(db, "categories"), {
             name: name,
             order: Date.now(), 
@@ -33,7 +33,6 @@ export const ChatService = {
         });
     },
 
-    // НОВОЕ: Обновление категории (например, для смены порядка)
     updateCategory: async (catId, data) => {
         const ref = doc(db, "categories", catId);
         await updateDoc(ref, data);
@@ -53,11 +52,12 @@ export const ChatService = {
             name: data.name,
             type: data.type, 
             password: data.password || "",
-            categoryId: data.categoryId || "root", // По умолчанию в корень
+            categoryId: data.categoryId || "root", 
             avatar: data.avatar || "", 
             ownerId: creatorUid,
             members: [creatorUid],
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            lastMessageAt: Date.now() // Инициализируем время для сортировки/уведомлений
         });
     },
 
@@ -83,7 +83,30 @@ export const ChatService = {
         });
     },
 
+    // Обновленный метод отправки
     sendMessage: async (msgData) => {
-        await addDoc(collection(db, "messages"), { ...msgData, createdAt: Date.now() });
+        // 1. Создаем сообщение
+        await addDoc(collection(db, "messages"), {
+            ...msgData,
+            createdAt: Date.now()
+        });
+
+        // 2. Обновляем метку времени в комнате (для уведомлений)
+        // Проверяем, что это не личные сообщения (у них ID = UID пользователя, обычно длинный, но на всякий случай)
+        // В текущей реализации ID комнат от Firebase длинные, а "Избранное" = UID юзера.
+        // Чтобы "Избранное" тоже апалось, можно убрать проверку или адаптировать логику.
+        // Сейчас обновляем только реальные комнаты из коллекции rooms.
+        if (msgData.room && msgData.room !== 'general') {
+            try {
+                // Пытаемся обновить документ комнаты. Если это "Избранное" (нет в rooms), Firebase выдаст ошибку, которую мы подавим.
+                // Либо можно проверить существование, но updateDoc просто упадет если дока нет.
+                const roomRef = doc(db, "rooms", msgData.room);
+                await updateDoc(roomRef, { 
+                    lastMessageAt: Date.now() 
+                });
+            } catch (e) {
+                // Игнорируем, если пишем в "Избранное" или комнату, которой нет в коллекции rooms
+            }
+        }
     }
 };
