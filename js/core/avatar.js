@@ -5,7 +5,10 @@ import { vertexShader, effects } from './shaders.js';
 export class AvatarRenderer {
     constructor(containerId, imageUrl, options = {}) {
         this.container = document.getElementById(containerId);
-        if (!this.container) return;
+        if (!this.container) {
+            console.error(`Avatar container #${containerId} not found`);
+            return;
+        }
 
         this.width = this.container.offsetWidth;
         this.height = this.container.offsetHeight;
@@ -31,37 +34,45 @@ export class AvatarRenderer {
 
         this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         this.renderer.setSize(this.width, this.height);
+        this.renderer.setPixelRatio(window.devicePixelRatio); // Для четкости
         this.container.appendChild(this.renderer.domElement);
 
-        // Текстура шума для Liquid
+        // Генерация текстуры шума для Liquid эффекта
         const size = 128;
         const data = new Uint8Array(size * size * 4);
         for (let i = 0; i < size * size * 4; i++) data[i] = Math.random() * 255;
         this.dispTexture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
         this.dispTexture.needsUpdate = true;
+        
         this.clock = new THREE.Clock();
     }
 
-    // Смена картинки
+    // Метод загрузки/смены картинки
     updateImage(url) {
         new THREE.TextureLoader().load(url, (tex) => {
             tex.minFilter = THREE.LinearFilter;
+            tex.generateMipmaps = false;
             this.currentTexture = tex;
             this.createMesh();
         });
     }
 
-    // Смена настроек (шейдер, интенсивность)
+    // Метод обновления настроек (шейдер, сила)
     updateSettings(newOptions) {
         this.options = Object.assign(this.options, newOptions);
-        if (this.currentTexture) this.createMesh();
+        if (this.currentTexture) {
+            this.createMesh();
+        }
     }
 
-    loadImage(url) { this.updateImage(url); }
+    loadImage(url) {
+        this.updateImage(url);
+    }
 
     createMesh() {
         if (this.mesh) this.scene.remove(this.mesh);
         
+        // Получаем код шейдера из конфига (или дефолт)
         const effectData = effects[this.options.effect] || effects.liquid;
         
         this.uniforms = {
@@ -71,6 +82,15 @@ export class AvatarRenderer {
             intensity: { value: this.options.intensity },
             time: { value: 0.0 }
         };
+
+        // Мержим дефолтные юниформы с специфичными для эффекта
+        if (effectData.uniforms) {
+            Object.keys(effectData.uniforms).forEach(key => {
+                this.uniforms[key] = { value: effectData.uniforms[key] };
+            });
+            // Перезаписываем intensity если оно есть в опциях
+            this.uniforms.intensity.value = this.options.intensity;
+        }
 
         this.material = new THREE.ShaderMaterial({
             uniforms: this.uniforms,
@@ -86,18 +106,29 @@ export class AvatarRenderer {
 
     addEvents() {
         this.container.addEventListener('mouseenter', () => {
-            gsap.to(this.uniforms.dispFactor, { value: 1, duration: 0.8, ease: "power2.out" });
+            gsap.to(this.uniforms.dispFactor, { 
+                value: 1, 
+                duration: 0.8, 
+                ease: "power2.out" 
+            });
         });
         this.container.addEventListener('mouseleave', () => {
-            gsap.to(this.uniforms.dispFactor, { value: 0, duration: 0.8, ease: "power2.inOut" });
+            gsap.to(this.uniforms.dispFactor, { 
+                value: 0, 
+                duration: 0.8, 
+                ease: "power2.inOut" 
+            });
         });
     }
 
     animate() {
         requestAnimationFrame(() => this.animate());
+        
+        // Обновляем время для шейдеров, которые его используют (Glitch)
         if (this.uniforms && this.uniforms.time) {
             this.uniforms.time.value = this.clock.getElapsedTime();
         }
+        
         this.renderer.render(this.scene, this.camera);
     }
 }
