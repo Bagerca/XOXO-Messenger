@@ -24,14 +24,12 @@ export const ChatService = {
         await updateDoc(ref, data);
     },
 
-    // Получить одного пользователя (Хелпер)
     getUser: async (uid) => {
         const snap = await getDoc(doc(db, "users", uid));
         if (snap.exists()) return { uid: snap.id, ...snap.data() };
         return null;
     },
 
-    // Получить массив пользователей по ID
     getUsersByIds: async (userIds) => {
         if (!userIds || userIds.length === 0) return [];
         const promises = userIds.map(uid => getDoc(doc(db, "users", uid)));
@@ -43,7 +41,6 @@ export const ChatService = {
         });
     },
 
-    // Получить ВСЕХ пользователей (для Общего холла)
     getAllUsers: async () => {
         const snapshot = await getDocs(collection(db, "users"));
         return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
@@ -125,9 +122,7 @@ export const ChatService = {
         });
     },
 
-    // НОВОЕ: Личные чаты (Direct Messages)
     getOrCreateDirectChat: async (myUid, otherUid) => {
-        // ID чата = два UID отсортированных по алфавиту
         const uids = [myUid, otherUid].sort();
         const chatId = `${uids[0]}_${uids[1]}`;
 
@@ -140,9 +135,8 @@ export const ChatService = {
             const otherUserSnap = await getDoc(doc(db, "users", otherUid));
             const otherUserData = otherUserSnap.exists() ? otherUserSnap.data() : { nickname: "User" };
 
-            // Создаем
             const roomData = {
-                name: otherUserData.nickname, // Имя временно, на клиенте подменяем
+                name: otherUserData.nickname, 
                 type: 'dm',
                 members: uids,
                 createdAt: Date.now(),
@@ -157,11 +151,28 @@ export const ChatService = {
         }
     },
 
-    // Получить список моих комнат (для пересылки)
     getMyRooms: async (uid) => {
         const q = query(collection(db, "rooms"), where("members", "array-contains", uid));
         const snap = await getDocs(q);
         return snap.docs.map(d => ({id: d.id, ...d.data()}));
+    },
+
+    // НОВОЕ: Очистка истории
+    clearChatHistory: async (roomId) => {
+        const q = query(collection(db, "messages"), where("room", "==", roomId));
+        const snapshot = await getDocs(q);
+        
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        
+        await batch.commit();
+    },
+    
+    // НОВОЕ: Блокировка (удаление чата)
+    blockUser: async (roomId) => {
+        await deleteDoc(doc(db, "rooms", roomId));
     },
 
     // --- СООБЩЕНИЯ ---
