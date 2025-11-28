@@ -32,23 +32,39 @@ body, html {
 }
 
 .logo-container {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-left: 8px;
+    display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding-left: 8px;
 }
 .sidebar-logo { width: 42px; height: 42px; filter: drop-shadow(0 0 8px rgba(138,43,226,0.4)); }
 .logo-text { font-size: 24px; font-weight: 800; line-height: 1; letter-spacing: -0.5px; }
 
-.rooms-nav { flex: 1; }
-.rooms-nav button {
+/* Навигация по комнатам */
+.rooms-nav { flex: 1; overflow-y: auto; padding-right: 5px; }
+.rooms-nav::-webkit-scrollbar { width: 4px; }
+.rooms-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+.rooms-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 8px 10px 8px; margin-bottom: 5px;
+    font-size: 11px; font-weight: 800; color: #666; letter-spacing: 1px;
+}
+#btn-create-room-toggle {
+    background: none; border: none; color: #888; font-size: 18px; cursor: pointer;
+    padding: 0; line-height: 1; transition: 0.2s;
+}
+#btn-create-room-toggle:hover { color: var(--primary); transform: scale(1.2); }
+
+.room-btn {
     display: flex; align-items: center; gap: 10px;
     width: 100%; text-align: left; background: none; border: none;
-    color: #888; padding: 12px 16px; cursor: pointer; border-radius: 12px; 
-    font-weight: 600; font-size: 15px; transition: 0.2s; font-family: inherit;
+    color: #999; padding: 10px 14px; cursor: pointer; border-radius: 8px; 
+    font-weight: 500; font-size: 14px; transition: 0.2s; font-family: inherit;
+    margin-bottom: 2px;
 }
-.rooms-nav button:hover { background: var(--glass); color: white; }
-.rooms-nav button.active { background: rgba(138,43,226,0.15); color: var(--primary); }
+.room-btn:hover { background: rgba(255,255,255,0.03); color: white; }
+.room-btn.active { background: rgba(138,43,226,0.15); color: white; font-weight: 700; border-left: 3px solid var(--primary); }
 
 /* --- ПАНЕЛЬ ПРОФИЛЯ (Сайдбар) --- */
-.me-panel-container { margin-top: auto; position: relative; }
+.me-panel-container { margin-top: auto; position: relative; padding-top: 20px;}
 
 .me-card {
     position: relative; display: flex; align-items: center; gap: 12px;
@@ -118,7 +134,7 @@ body, html {
 .dot.busy { background: #ff4b6a; }
 .dot.offline { background: #777; }
 
-/* --- ЧАТ ЗОНА --- */
+/* --- ЧАТ ЗОНА (Обновленный) --- */
 .chat-area {
     flex: 1; display: flex; flex-direction: column; position: relative;
     background: radial-gradient(circle at center, rgba(138,43,226,0.05), transparent 70%);
@@ -128,24 +144,59 @@ body, html {
     display: flex; align-items: center; padding: 0 24px; flex-shrink: 0;
     background: rgba(5,5,17,0.8); backdrop-filter: blur(10px);
 }
-.chat-header h2 { margin: 0; font-size: 18px; color: white; letter-spacing: 0.5px; }
+.chat-header h2 { margin: 0; font-size: 18px; color: white; letter-spacing: 0.5px; transition: opacity 0.2s; }
 
-.messages-list { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-.message-row { display: flex; align-items: flex-end; gap: 12px; flex-shrink: 0; }
-.message-row.me { flex-direction: row-reverse; }
-.avatar { width: 38px; height: 38px; border-radius: 12px; background-size: cover; flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-.bubble-wrapper { display: flex; flex-direction: column; max-width: 65%; }
-.message-row.me .bubble-wrapper { align-items: flex-end; }
-.name { font-size: 11px; color: #777; margin-bottom: 4px; margin-left: 2px; font-weight: 700; }
-.bubble {
-    padding: 12px 16px; border-radius: 18px; position: relative;
-    color: white; font-size: 15px; line-height: 1.5; word-wrap: break-word;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+.messages-list { flex: 1; overflow-y: auto; padding: 20px 0; display: flex; flex-direction: column; gap: 20px; }
+
+/* Новые стили сообщений */
+.message-row { 
+    display: flex; align-items: flex-end; gap: 14px; 
+    padding: 0 24px; 
+    position: relative;
+    animation: slideIn 0.3s ease-out;
 }
-.message-row.them .bubble { background: var(--bubble-them); border-radius: 4px 18px 18px 4px; }
-.message-row.me .bubble { background: var(--bubble-me); border-radius: 18px 4px 4px 18px; }
-.time { font-size: 10px; opacity: 0.5; text-align: right; margin-top: 4px; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+.message-row.me { flex-direction: row-reverse; }
+
+.avatar { 
+    width: 42px; height: 42px; border-radius: 14px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.3s;
+    background-size: cover; background-position: center;
+}
+.message-row:hover .avatar { transform: scale(1.05); }
+
+.bubble-wrapper { display: flex; flex-direction: column; max-width: 60%; }
+.message-row.me .bubble-wrapper { align-items: flex-end; }
+
+.name { 
+    font-size: 12px; color: #666; margin-bottom: 6px; margin-left: 4px; 
+    font-weight: 700; letter-spacing: 0.3px; 
+}
+.message-row.me .name { display: none; }
+
+.bubble {
+    padding: 14px 18px; position: relative;
+    color: #eee; font-size: 15px; line-height: 1.6; word-wrap: break-word;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: 0.2s;
+}
+.message-row.them .bubble { 
+    background: #1e1e2d; 
+    border-radius: 4px 20px 20px 20px; 
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.message-row.me .bubble { 
+    background: linear-gradient(135deg, #8A2BE2, #7B61FF); 
+    border-radius: 20px 20px 4px 20px; 
+    box-shadow: 0 5px 20px rgba(138,43,226,0.3);
+    color: white; font-weight: 500;
+}
+.time { 
+    font-size: 10px; opacity: 0.4; margin-top: 6px; 
+    text-align: right; font-weight: 600; 
+}
+
+/* INPUT */
 .input-area { padding: 24px; flex-shrink: 0; }
 .input-wrapper {
     background: rgba(255,255,255,0.03); border-radius: 24px;
@@ -162,10 +213,34 @@ body, html {
 #send-btn:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(138,43,226,0.5); }
 
 
-/* ========================================= */
-/* НОВЫЙ ДИЗАЙН НАСТРОЕК (PRO VERTICAL) */
-/* ========================================= */
+/* --- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ КОМНАТЫ (SIMPLE) --- */
+.modal-simple {
+    background: #1a1a2e; padding: 25px; border-radius: 20px;
+    width: 300px; border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.7); text-align: center;
+    transform: scale(0.9); transition: 0.3s;
+}
+.modal-overlay.open .modal-simple { transform: scale(1); }
+.modal-simple h3 { margin: 0 0 20px 0; color: white; }
+.modal-simple input {
+    width: 100%; padding: 12px; background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+    color: white; margin-bottom: 20px; outline: none; box-sizing: border-box; font-family: inherit;
+}
+.modal-simple input:focus { border-color: var(--primary); }
+.modal-actions { display: flex; gap: 10px; justify-content: center; }
+.btn-primary { 
+    background: var(--primary); color: white; border: none; padding: 10px 20px; 
+    border-radius: 8px; cursor: pointer; font-weight: 600; font-family: inherit;
+}
+.btn-text { 
+    background: none; color: #888; border: none; padding: 10px 20px; 
+    cursor: pointer; font-weight: 600; font-family: inherit;
+}
+.btn-text:hover { color: white; }
 
+
+/* --- МОДАЛЬНОЕ ОКНО НАСТРОЕК (PRO) --- */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(5, 5, 12, 0.85); backdrop-filter: blur(10px);
@@ -190,7 +265,6 @@ body, html {
     opacity: 0.6; pointer-events: none; z-index: 0;
 }
 
-/* --- HERO SECTION --- */
 .hero-section {
     z-index: 1; padding: 40px 20px 10px 20px;
     display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
@@ -230,7 +304,6 @@ body, html {
 .user-info h2 { margin: 0; font-size: 22px; font-weight: 800; color: white; }
 .user-info p { margin: 5px 0 0 0; color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500; }
 
-/* --- VIEWS CONTAINER --- */
 .views-container { flex: 1; position: relative; overflow: hidden; margin-top: 20px; }
 .view-slide {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -240,7 +313,6 @@ body, html {
 .view-slide.active { opacity: 1; pointer-events: all; transform: translateX(0); }
 .view-slide::-webkit-scrollbar { width: 0; }
 
-/* Формы */
 .input-group { margin-bottom: 25px; }
 .lbl { display: block; font-size: 11px; font-weight: 800; color: #888; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase; }
 .inp {
@@ -251,7 +323,6 @@ body, html {
 }
 .inp:focus { border-color: var(--primary); background: rgba(138,43,226,0.1); }
 
-/* Кнопки */
 .save-area { margin-top: 30px; display: flex; flex-direction: column; gap: 10px; }
 .btn-save {
     width: 100%; padding: 14px; background: white; border: none; border-radius: 14px;
@@ -266,7 +337,6 @@ body, html {
 .btn-close-text { background: none; border: none; color: #666; width: 100%; margin-top: 15px; cursor: pointer; font-size: 13px; }
 .btn-close-text:hover { color: #fff; }
 
-/* Визуальный редактор */
 .back-btn {
     background: none; border: none; color: #888; font-size: 13px; font-weight: 600;
     display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 20px; font-family: inherit;
