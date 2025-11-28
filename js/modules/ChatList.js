@@ -9,6 +9,9 @@ export class ChatList {
         this.localRooms = [];
         this.localCategories = [];
         
+        // Хранилище ID свернутых категорий
+        this.collapsedCategories = new Set();
+
         this.draggedType = null; 
         this.draggedId = null;   
 
@@ -112,10 +115,24 @@ export class ChatList {
         catContainer.dataset.catId = cat.id;
         catContainer.draggable = true; 
 
+        // ВОССТАНОВЛЕНИЕ СОСТОЯНИЯ: Если была свернута - добавляем класс
+        if (this.collapsedCategories.has(cat.id)) {
+            catContainer.classList.add('collapsed');
+        }
+
         const header = document.createElement('div');
         header.className = 'category-header';
         header.innerHTML = `<span class="cat-arrow">▼</span> ${cat.name}`;
-        header.addEventListener('click', () => catContainer.classList.toggle('collapsed'));
+        
+        // ОБНОВЛЕННЫЙ КЛИК: Сохраняем состояние в Set
+        header.addEventListener('click', () => {
+            catContainer.classList.toggle('collapsed');
+            if (catContainer.classList.contains('collapsed')) {
+                this.collapsedCategories.add(cat.id);
+            } else {
+                this.collapsedCategories.delete(cat.id);
+            }
+        });
         
         const roomsContainer = document.createElement('div');
         roomsContainer.className = 'category-rooms';
@@ -132,7 +149,6 @@ export class ChatList {
             this.draggedId = cat.id;
             e.dataTransfer.effectAllowed = "move";
             
-            // Небольшая задержка для визуального эффекта
             setTimeout(() => catContainer.classList.add('dragging'), 0);
             e.stopPropagation();
         });
@@ -151,11 +167,10 @@ export class ChatList {
                 catContainer.classList.add('drag-over-insert');
             } 
             else if (this.draggedType === 'category' && this.draggedId !== cat.id) {
-                // Вычисляем позицию мыши относительно высоты элемента
+                // Вычисляем позицию мыши для отрисовки линии
                 const rect = catContainer.getBoundingClientRect();
                 const offset = e.clientY - rect.top;
                 
-                // Если мышь в верхней половине - линия сверху, иначе снизу
                 if (offset < rect.height / 2) {
                     catContainer.classList.add('drop-above');
                     catContainer.classList.remove('drop-below');
@@ -167,17 +182,15 @@ export class ChatList {
         });
 
         catContainer.addEventListener('dragleave', () => {
-            catContainer.classList.remove('drag-over-insert');
-            catContainer.classList.remove('drop-above');
-            catContainer.classList.remove('drop-below');
+            this.clearVisuals(catContainer);
         });
 
         catContainer.addEventListener('drop', async (e) => {
             e.preventDefault();
             e.stopPropagation();
             
-            // Очистка классов
-            const dropAbove = catContainer.classList.contains('drop-above');
+            // Запоминаем, куда хотели бросить (сверху или снизу), так как clearVisuals сотрет классы
+            const isAbove = catContainer.classList.contains('drop-above');
             this.clearVisuals(catContainer);
 
             if (!this.draggedId) return;
@@ -189,13 +202,13 @@ export class ChatList {
                     await ChatService.updateRoom(this.draggedId, { categoryId: cat.id });
                 }
             }
-            // 2. Бросили КАТЕГОРИЮ -> Меняем порядок
+            // 2. Бросили КАТЕГОРИЮ
             else if (this.draggedType === 'category' && this.draggedId !== cat.id) {
-                // Для простоты реализации делаем Swap (обмен местами)
-                // В полноценном приложении тут нужно пересчитывать индексы order
                 const srcCat = this.localCategories.find(c => c.id === this.draggedId);
                 const targetCat = cat;
                 
+                // Простой свап (для MVP). 
+                // В идеале тут нужен пересчет индексов на основе isAbove / !isAbove
                 const srcOrder = srcCat.order;
                 const targetOrder = targetCat.order;
 
