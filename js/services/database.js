@@ -36,7 +36,6 @@ export const ChatService = {
         await updateDoc(ref, data);
     },
 
-    // НОВОЕ: Удаление категории
     deleteCategory: async (catId) => {
         // 1. Находим все чаты в этой категории
         const q = query(collection(db, "rooms"), where("categoryId", "==", catId));
@@ -79,13 +78,10 @@ export const ChatService = {
         await updateDoc(ref, data);
     },
 
-    // НОВОЕ: Удаление комнаты
     deleteRoom: async (roomId) => {
         await deleteDoc(doc(db, "rooms", roomId));
-        // (Опционально: можно удалить и сообщения, но это дорого по операциям)
     },
 
-    // НОВОЕ: Покинуть комнату
     leaveRoom: async (roomId, userId) => {
         const ref = doc(db, "rooms", roomId);
         await updateDoc(ref, {
@@ -118,5 +114,17 @@ export const ChatService = {
                 await updateDoc(roomRef, { lastMessageAt: Date.now() });
             } catch (e) {}
         }
+    },
+
+    // Обновить сообщение (для редактирования или закрепления)
+    updateMessage: async (msgId, data) => {
+        const ref = doc(db, "messages", msgId);
+        await updateDoc(ref, data);
+    },
+
+    // Удалить сообщение
+    deleteMessage: async (msgId) => {
+        const ref = doc(db, "messages", msgId);
+        await deleteDoc(ref);
     }
 };
