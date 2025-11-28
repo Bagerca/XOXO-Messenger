@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/chat.css">
     <link rel="stylesheet" href="css/profile.css">
+    <!-- НОВОЕ: Стили правой панели -->
+    <link rel="stylesheet" href="css/right-sidebar.css">
 
     <!-- Анимация -->
     <script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
@@ -135,7 +137,7 @@
         </aside>
 
         <!-- ============================================== -->
-        <!-- ПРАВАЯ ПАНЕЛЬ (ЧАТ) -->
+        <!-- ЦЕНТРАЛЬНАЯ ПАНЕЛЬ (ЧАТ) -->
         <!-- ============================================== -->
         <main class="chat-area">
             <header class="chat-header">
@@ -143,14 +145,22 @@
                     <h2 id="room-title"># Общий холл</h2>
                     <span id="room-desc" class="room-desc">Открытый чат</span>
                 </div>
-                <button id="btn-edit-room" class="btn-icon" style="display:none;" title="Настройки группы">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                </button>
+                
+                <!-- КНОПКИ УПРАВЛЕНИЯ СПРАВА -->
+                <div class="header-controls" style="display:flex; gap:10px;">
+                    <button id="btn-edit-room" class="btn-icon" style="display:none;" title="Настройки группы">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    <!-- КНОПКА ОТКРЫТИЯ ПРАВОЙ ПАНЕЛИ -->
+                    <button id="btn-toggle-info" class="btn-icon" title="Информация">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </button>
+                </div>
             </header>
             
             <div id="chat-messages-area" class="messages-list"></div>
             
-            <!-- НОВАЯ ОБЛАСТЬ РЕДАКТОРА (RICH TEXT) -->
+            <!-- ОБЛАСТЬ РЕДАКТОРА (RICH TEXT) -->
             <div class="input-area">
                 <div class="editor-container">
                     
@@ -158,27 +168,20 @@
                     <div class="editor-toolbar">
                         <button class="toolbar-btn" data-cmd="bold" title="Жирный"><b>B</b></button>
                         <button class="toolbar-btn" data-cmd="italic" title="Курсив"><i>I</i></button>
-                        
                         <div class="toolbar-divider"></div>
-                        
                         <button class="toolbar-btn" data-cmd="justifyLeft" title="Слева"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg></button>
                         <button class="toolbar-btn" data-cmd="justifyCenter" title="Центр"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg></button>
                         <button class="toolbar-btn" data-cmd="justifyRight" title="Справа"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg></button>
-                        
                         <div class="toolbar-divider"></div>
-
                         <button class="toolbar-btn" id="btn-spoiler" title="Спойлер (Скрыть)">👁️‍🗨️</button>
-                        
                         <div class="toolbar-spacer"></div>
-
                         <button class="toolbar-btn" id="btn-trigger-img" title="Вставить фото">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                         </button>
-                        <!-- Скрытый инпут для фото -->
                         <input type="file" id="editor-file-input" accept="image/*" style="display: none;">
                     </div>
 
-                    <!-- Поле ввода (ContentEditable) -->
+                    <!-- Поле ввода -->
                     <div class="editor-content-wrapper">
                         <div id="rich-input" class="rich-input" contenteditable="true" placeholder="Напишите сообщение..."></div>
                         <button id="send-btn" class="editor-send-btn">➤</button>
@@ -186,7 +189,41 @@
                 </div>
             </div>
         </main>
-    </div>
+
+        <!-- ============================================== -->
+        <!-- ПРАВАЯ ПАНЕЛЬ (INFO SIDEBAR) -->
+        <!-- ============================================== -->
+        <aside class="right-sidebar" id="right-sidebar">
+            <!-- 1. ИНФО О ГРУППЕ -->
+            <div class="rs-header">
+                <div class="rs-avatar" id="rs-room-avatar">#</div>
+                <h3 id="rs-room-name">Загрузка...</h3>
+                <span id="rs-room-type">Информация</span>
+            </div>
+
+            <!-- 2. МЕДИА -->
+            <div class="rs-section">
+                <div class="rs-section-header" id="btn-toggle-media">
+                    <span>Медиа</span>
+                    <span class="rs-arrow">▼</span>
+                </div>
+                <div class="rs-media-grid" id="rs-media-grid">
+                    <!-- Картинки добавятся через JS -->
+                </div>
+            </div>
+
+            <!-- 3. УЧАСТНИКИ -->
+            <div class="rs-section" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+                <div class="rs-section-header">
+                    <span>Участники <span id="rs-members-count" style="opacity:0.5; font-size:11px;">(0)</span></span>
+                </div>
+                <div class="rs-members-list" id="rs-members-list">
+                    <!-- Участники добавятся через JS -->
+                </div>
+            </div>
+        </aside>
+
+    </div> <!-- Конец .app-layout -->
 
     <!-- ============================================== -->
     <!-- МОДАЛЬНЫЕ ОКНА -->
@@ -335,7 +372,7 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- КОНТЕКСТНОЕ МЕНЮ СООБЩЕНИЙ (НОВОЕ) -->
+    <!-- КОНТЕКСТНОЕ МЕНЮ СООБЩЕНИЙ (ПКМ ПО SMS) -->
     <!-- ============================================== -->
     <div id="msg-context-menu" class="context-menu">
         <div class="ctx-item" id="ctx-msg-copy">📄 Копировать текст</div>
@@ -349,7 +386,7 @@
     <div id="edit-msg-modal" class="modal-overlay">
         <div class="modal-simple">
             <h3>Редактирование</h3>
-            <!-- Используем div contenteditable, чтобы сохранить форматирование -->
+            <!-- Используем div contenteditable -->
             <div id="edit-msg-input" class="rich-input" contenteditable="true" style="background:rgba(0,0,0,0.2); border:1px solid #444; min-height:80px; text-align:left; margin-bottom:15px; border-radius:10px; padding:10px;"></div>
             <div class="modal-actions">
                 <button id="btn-cancel-edit-msg" class="btn-text">Отмена</button>
