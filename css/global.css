@@ -1,0 +1,53 @@
+:root {
+    --bg-dark: #04040c; 
+    --bg-panel: #101021;
+    --primary: #8A2BE2;
+    --text: #ffffff;
+    --bubble-me: linear-gradient(135deg, #8A2BE2, #6a11cb);
+    --bubble-them: #1e1e2d;
+    --border: rgba(255, 255, 255, 0.05);
+    --glass: rgba(255, 255, 255, 0.03);
+}
+
+body, html { margin: 0; padding: 0; height: 100%; font-family: 'Outfit', sans-serif; background: var(--bg-dark); color: var(--text); overflow: hidden; }
+.app-layout { display: flex; height: 100vh; width: 100%; }
+
+/* --- ОБЩИЕ ЭЛЕМЕНТЫ --- */
+.btn-icon { background: none; border: none; color: #777; cursor: pointer; transition: 0.2s; padding: 8px; border-radius: 8px; }
+.btn-icon:hover { color: white; background: rgba(255,255,255,0.05); }
+
+/* --- МОДАЛЬНЫЕ ОКНА (ОБЩЕЕ) --- */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 5, 0.85); backdrop-filter: blur(8px);
+    z-index: 2000; display: flex; justify-content: center; align-items: center;
+    opacity: 0; visibility: hidden; pointer-events: none; transition: 0.3s;
+}
+.modal-overlay.open { opacity: 1; visibility: visible; pointer-events: all; }
+
+.modal-simple {
+    background: #151525; padding: 30px; border-radius: 24px;
+    width: 320px; border: 1px solid var(--border); text-align: center;
+    transform: scale(0.95); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.modal-overlay.open .modal-simple { transform: scale(1); }
+.modal-simple h3 { margin: 0 0 20px 0; color: white; font-size: 20px; }
+
+.modal-inp {
+    width: 100%; padding: 14px; background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+    color: white; margin-bottom: 12px; outline: none; box-sizing: border-box; font-family: inherit;
+}
+.modal-inp:focus { border-color: var(--primary); }
+
+.modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+.btn-primary { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 600; font-family: inherit; }
+.btn-text { background: none; color: #888; border: none; padding: 12px 20px; cursor: pointer; font-weight: 600; font-family: inherit; }
+.btn-text:hover { color: white; }
+
+.room-type-selector { display: flex; gap: 10px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px; }
+.radio-label { flex: 1; cursor: pointer; }
+.radio-label input { display: none; }
+.radio-label span { display: block; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #666; transition: 0.2s; }
+.radio-label input:checked + span { background: var(--primary); color: white; }
+.hint-text { font-size: 12px; color: #666; margin-bottom: 15px; line-height: 1.4; }
