@@ -50,15 +50,13 @@
 /* --- СТРОКА СООБЩЕНИЯ --- */
 .message-row {
     display: flex;
-    width: 100%;
-    padding: 0 24px;
-    box-sizing: border-box;
-    position: relative;
+    gap: 1rem; /* Отступ между аватаркой и текстом */
+    margin-bottom: 1.5rem;
     
-    /* !!! ГЛАВНЫЕ ИСПРАВЛЕНИЯ !!! */
-    flex: 0 0 auto !important; /* ЗАПРЕТ НА РАСТЯГИВАНИЕ ПО ВЫСОТЕ */
-    height: auto !important;   /* ВЫСОТА ТОЛЬКО ПО КОНТЕНТУ */
-    min-height: 0;
+    /* ГЛАВНОЕ ИСПРАВЛЕНИЕ: */
+    align-items: flex-start; /* Элементы прижимаются к верху, а не растягиваются */
+    height: auto; /* Высота определяется содержимым, а не родителем */
+    flex-shrink: 0; /* Запрещаем сообщению сжиматься */
 }
 
 .message-row:hover .msg-actions { opacity: 1; visibility: visible; transform: translateY(0); }
@@ -101,18 +99,24 @@
 
 /* --- ПУЗЫРЬ С ТЕКСТОМ --- */
 .msg-bubble {
-    padding: 10px 16px;
-    font-size: 15px;
-    line-height: 1.5;
-    color: #eee;
-    word-wrap: break-word;
-    white-space: pre-wrap;
     position: relative;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 12px 16px;
+    border-radius: 12px;
     
-    /* !!! ГЛАВНЫЕ ИСПРАВЛЕНИЯ !!! */
-    width: fit-content !important; /* Ширина только под текст */
-    height: auto !important;       /* Высота только под текст */
+    /* Визуал (ваш стиль) */
+    background: rgba(139, 92, 246, 0.6); /* Фиолетовый полупрозрачный */
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    
+    /* ГЛАВНОЕ ИСПРАВЛЕНИЕ: */
+    height: auto !important; /* Принудительно авто-высота */
+    min-height: auto !important; /* Убираем минимальную высоту, если была */
+    width: fit-content; /* Ширина подстраивается под текст */
+    max-width: 70%; /* Чтобы не улезало за экран */
+    
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Центровка текста внутри пузыря */
 }
 
 .msg-time-inline {
