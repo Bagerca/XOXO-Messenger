@@ -1,6 +1,6 @@
 import { db } from "../config.js";
 import { 
-    collection, addDoc, query, where, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc
+    collection, addDoc, query, where, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayRemove, getDocs, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 export const ChatService = {
@@ -27,15 +27,33 @@ export const ChatService = {
     // --- КАТЕГОРИИ ---
     createCategory: async (name) => {
         await addDoc(collection(db, "categories"), {
-            name: name,
-            order: Date.now(), 
-            createdAt: Date.now()
+            name: name, order: Date.now(), createdAt: Date.now()
         });
     },
 
     updateCategory: async (catId, data) => {
         const ref = doc(db, "categories", catId);
         await updateDoc(ref, data);
+    },
+
+    // НОВОЕ: Удаление категории
+    deleteCategory: async (catId) => {
+        // 1. Находим все чаты в этой категории
+        const q = query(collection(db, "rooms"), where("categoryId", "==", catId));
+        const snapshot = await getDocs(q);
+        
+        const batch = writeBatch(db);
+
+        // 2. Переносим чаты в root
+        snapshot.forEach(doc => {
+            batch.update(doc.ref, { categoryId: "root" });
+        });
+
+        // 3. Удаляем саму категорию
+        const catRef = doc(db, "categories", catId);
+        batch.delete(catRef);
+
+        await batch.commit();
     },
 
     subscribeToCategories: (callback) => {
@@ -49,21 +67,30 @@ export const ChatService = {
     // --- КОМНАТЫ ---
     createRoom: async (data, creatorUid) => {
         await addDoc(collection(db, "rooms"), {
-            name: data.name,
-            type: data.type, 
-            password: data.password || "",
-            categoryId: data.categoryId || "root", 
-            avatar: data.avatar || "", 
-            ownerId: creatorUid,
-            members: [creatorUid],
-            createdAt: Date.now(),
-            lastMessageAt: Date.now() // Инициализируем время для сортировки/уведомлений
+            name: data.name, type: data.type, password: data.password || "",
+            categoryId: data.categoryId || "root", avatar: data.avatar || "", 
+            ownerId: creatorUid, members: [creatorUid], createdAt: Date.now(),
+            lastMessageAt: Date.now()
         });
     },
 
     updateRoom: async (roomId, data) => {
         const ref = doc(db, "rooms", roomId);
         await updateDoc(ref, data);
+    },
+
+    // НОВОЕ: Удаление комнаты
+    deleteRoom: async (roomId) => {
+        await deleteDoc(doc(db, "rooms", roomId));
+        // (Опционально: можно удалить и сообщения, но это дорого по операциям)
+    },
+
+    // НОВОЕ: Покинуть комнату
+    leaveRoom: async (roomId, userId) => {
+        const ref = doc(db, "rooms", roomId);
+        await updateDoc(ref, {
+            members: arrayRemove(userId)
+        });
     },
 
     subscribeToRooms: (callback) => {
@@ -83,30 +110,13 @@ export const ChatService = {
         });
     },
 
-    // Обновленный метод отправки
     sendMessage: async (msgData) => {
-        // 1. Создаем сообщение
-        await addDoc(collection(db, "messages"), {
-            ...msgData,
-            createdAt: Date.now()
-        });
-
-        // 2. Обновляем метку времени в комнате (для уведомлений)
-        // Проверяем, что это не личные сообщения (у них ID = UID пользователя, обычно длинный, но на всякий случай)
-        // В текущей реализации ID комнат от Firebase длинные, а "Избранное" = UID юзера.
-        // Чтобы "Избранное" тоже апалось, можно убрать проверку или адаптировать логику.
-        // Сейчас обновляем только реальные комнаты из коллекции rooms.
+        await addDoc(collection(db, "messages"), { ...msgData, createdAt: Date.now() });
         if (msgData.room && msgData.room !== 'general') {
             try {
-                // Пытаемся обновить документ комнаты. Если это "Избранное" (нет в rooms), Firebase выдаст ошибку, которую мы подавим.
-                // Либо можно проверить существование, но updateDoc просто упадет если дока нет.
                 const roomRef = doc(db, "rooms", msgData.room);
-                await updateDoc(roomRef, { 
-                    lastMessageAt: Date.now() 
-                });
-            } catch (e) {
-                // Игнорируем, если пишем в "Избранное" или комнату, которой нет в коллекции rooms
-            }
+                await updateDoc(roomRef, { lastMessageAt: Date.now() });
+            } catch (e) {}
         }
     }
 };
