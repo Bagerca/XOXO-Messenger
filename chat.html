@@ -27,35 +27,47 @@
     <!-- КОНТЕКСТНОЕ МЕНЮ (САЙДБАР: ЧАТЫ И КАТЕГОРИИ) -->
     <!-- ============================================== -->
     <div id="context-menu" class="context-menu">
-        <!-- ГРУППА ДЕЙСТВИЙ: ОТКРЫТЬ/ЧИТАТЬ -->
+        <!-- 1. ОСНОВНЫЕ -->
         <div class="ctx-item" id="ctx-open">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
             Открыть
         </div>
         <div class="ctx-item" id="ctx-read">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            Отметить прочитанным
+            Прочитано
         </div>
         
-        <div class="ctx-divider"></div>
+        <!-- РАЗДЕЛИТЕЛЬ 1 -->
+        <div class="ctx-divider" id="ctx-div-1"></div>
         
-        <!-- ГРУППА ДЕЙСТВИЙ: УПРАВЛЕНИЕ -->
+        <!-- 2. УПРАВЛЕНИЕ (ГРУППЫ) -->
         <div class="ctx-item" id="ctx-edit-room">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            Изменить группу
+            Изменить
         </div>
         <div class="ctx-item" id="ctx-move-room">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-            Сменить категорию
+            Сменить папку
         </div>
         <div class="ctx-item" id="ctx-rename-cat">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             Переименовать
         </div>
         
-        <div class="ctx-divider"></div>
+        <!-- РАЗДЕЛИТЕЛЬ 2 -->
+        <div class="ctx-divider" id="ctx-div-2"></div>
         
-        <!-- ГРУППА ДЕЙСТВИЙ: ОПАСНЫЕ -->
+        <!-- 3. ДЕЙСТВИЯ (ОЧИСТКА/БЛОКИРОВКА) -->
+        <div class="ctx-item text-danger" id="ctx-clear-history">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            Очистить историю
+        </div>
+        <div class="ctx-item text-danger" id="ctx-block-user">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+            Заблокировать
+        </div>
+
+        <!-- 4. ОПАСНЫЕ (ВЫХОД/УДАЛЕНИЕ) -->
         <div class="ctx-item text-danger" id="ctx-leave-room">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             Покинуть
@@ -72,16 +84,13 @@
 
     <div class="app-layout">
         
-        <!-- ============================================== -->
-        <!-- ЛЕВАЯ ПАНЕЛЬ (SIDEBAR) -->
-        <!-- ============================================== -->
+        <!-- ЛЕВАЯ ПАНЕЛЬ -->
         <aside class="sidebar">
             <div class="logo-container">
                 <img src="logo.svg" alt="XOXO" class="sidebar-logo">
                 <div class="logo-text">XOXO <span style="color:#8A2BE2">V2</span></div>
             </div>
             
-            <!-- 1. ЗАКРЕПЛЕННЫЕ ЧАТЫ -->
             <div class="nav-pinned">
                 <button class="nav-item-lg" id="btn-saved">
                     <div class="nav-icon-box" style="background: linear-gradient(135deg, #FF9966, #FF5E62);">
@@ -104,41 +113,27 @@
                 </button>
             </div>
 
-            <!-- 2. ЗАГОЛОВОК И МЕНЮ СОЗДАНИЯ -->
             <div class="rooms-section-header">
                 <span class="section-title">Пространства</span>
-                
                 <div class="create-menu-wrapper">
                     <button id="btn-create-menu" class="btn-add-new" title="Создать...">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     </button>
-                    
-                    <!-- Выпадающее меню -->
                     <div class="create-dropdown" id="create-dropdown">
                         <div class="dropdown-item" id="opt-create-cat">
                             <span class="icon-box cat-icon">📁</span>
-                            <div class="dd-text">
-                                <span class="dd-title">Категория</span>
-                                <span class="dd-desc">Папка для чатов</span>
-                            </div>
+                            <div class="dd-text"><span class="dd-title">Категория</span><span class="dd-desc">Папка для чатов</span></div>
                         </div>
                         <div class="dropdown-item" id="opt-create-room">
                             <span class="icon-box chat-icon">💬</span>
-                            <div class="dd-text">
-                                <span class="dd-title">Группа</span>
-                                <span class="dd-desc">Новый чат</span>
-                            </div>
+                            <div class="dd-text"><span class="dd-title">Группа</span><span class="dd-desc">Новый чат</span></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. СПИСОК КАТЕГОРИЙ И ЧАТОВ -->
-            <nav class="rooms-nav" id="rooms-list-container">
-                <!-- Сюда JS рендерит структуру -->
-            </nav>
+            <nav class="rooms-nav" id="rooms-list-container"></nav>
 
-            <!-- 4. ПАНЕЛЬ ПРОФИЛЯ -->
             <div class="me-panel-container">
                 <div id="status-popup" class="status-popup">
                     <div class="status-option" data-status="online"><span class="dot online"></span> В сети</div>
@@ -166,21 +161,17 @@
             </div>
         </aside>
 
-        <!-- ============================================== -->
-        <!-- ЦЕНТРАЛЬНАЯ ПАНЕЛЬ (ЧАТ) -->
-        <!-- ============================================== -->
+        <!-- ЦЕНТРАЛЬНАЯ ПАНЕЛЬ -->
         <main class="chat-area">
             <header class="chat-header">
                 <div class="header-info">
                     <h2 id="room-title"># Общий холл</h2>
                     <span id="room-desc" class="room-desc">Открытый чат</span>
                 </div>
-                
                 <div class="header-controls" style="display:flex; gap:10px;">
                     <button id="btn-edit-room" class="btn-icon" style="display:none;" title="Настройки группы">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </button>
-                    <!-- КНОПКА ОТКРЫТИЯ ПРАВОЙ ПАНЕЛИ -->
                     <button id="btn-toggle-info" class="btn-icon" title="Информация">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                     </button>
@@ -204,7 +195,6 @@
             <!-- ОБЛАСТЬ РЕДАКТОРА -->
             <div class="input-area">
                 <div class="editor-container">
-                    <!-- Toolbar -->
                     <div class="editor-toolbar">
                         <button class="toolbar-btn" data-cmd="bold" title="Жирный"><b>B</b></button>
                         <button class="toolbar-btn" data-cmd="italic" title="Курсив"><i>I</i></button>
@@ -220,8 +210,6 @@
                         </button>
                         <input type="file" id="editor-file-input" accept="image/*" style="display: none;">
                     </div>
-
-                    <!-- Input -->
                     <div class="editor-content-wrapper">
                         <div id="rich-input" class="rich-input" contenteditable="true" placeholder="Напишите сообщение..."></div>
                         <button id="send-btn" class="editor-send-btn">➤</button>
@@ -230,9 +218,7 @@
             </div>
         </main>
 
-        <!-- ============================================== -->
-        <!-- ПРАВАЯ ПАНЕЛЬ (INFO SIDEBAR) -->
-        <!-- ============================================== -->
+        <!-- ПРАВАЯ ПАНЕЛЬ -->
         <aside class="right-sidebar" id="right-sidebar">
             <div class="rs-header">
                 <div class="rs-avatar" id="rs-room-avatar">#</div>
@@ -252,112 +238,17 @@
                 <div class="rs-members-list" id="rs-members-list"></div>
             </div>
         </aside>
+    </div>
 
-    </div> <!-- Конец .app-layout -->
-
-    <!-- ============================================== -->
     <!-- МОДАЛЬНЫЕ ОКНА -->
-    <!-- ============================================== -->
     
-    <!-- 1. Сменить категорию -->
-    <div id="move-room-modal" class="modal-overlay">
-        <div class="modal-simple">
-            <h3>Сменить категорию</h3>
-            <label class="lbl" style="text-align:left;">Выберите категорию:</label>
-            <select id="move-room-select" class="modal-inp"></select>
-            <div class="modal-actions">
-                <button id="btn-cancel-move" class="btn-text">Отмена</button>
-                <button id="btn-confirm-move" class="btn-primary">Переместить</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2. Переименовать категорию -->
-    <div id="rename-cat-modal" class="modal-overlay">
-        <div class="modal-simple">
-            <h3>Переименовать</h3>
-            <input type="text" id="rename-cat-input" class="modal-inp">
-            <div class="modal-actions">
-                <button id="btn-cancel-rename-cat" class="btn-text">Отмена</button>
-                <button id="btn-confirm-rename-cat" class="btn-primary">Сохранить</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. Создать категорию -->
-    <div id="create-cat-modal" class="modal-overlay">
-        <div class="modal-simple">
-            <h3>Новая категория</h3>
-            <input type="text" id="new-cat-name" placeholder="Название категории" class="modal-inp" autocomplete="off">
-            <div class="modal-actions">
-                <button id="btn-cancel-cat" class="btn-text">Отмена</button>
-                <button id="btn-confirm-cat" class="btn-primary">Создать</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. Создать чат -->
-    <div id="create-room-modal" class="modal-overlay">
-        <div class="modal-simple">
-            <h3>Создать группу</h3>
-            <input type="text" id="new-room-name" placeholder="Название группы" class="modal-inp" autocomplete="off">
-            
-            <label class="lbl" style="text-align:left; margin-bottom:5px; display:block;">Категория</label>
-            <select id="new-room-category-select" class="modal-inp">
-                <option value="uncategorized">Без категории</option>
-            </select>
-
-            <input type="text" id="new-room-avatar" placeholder="Ссылка на аватар (URL)" class="modal-inp" autocomplete="off">
-
-            <div class="room-type-selector">
-                <label class="radio-label">
-                    <input type="radio" name="roomType" value="public" checked> 
-                    <span>🌐 Публичная</span>
-                </label>
-                <label class="radio-label">
-                    <input type="radio" name="roomType" value="private"> 
-                    <span>🔒 Приватная</span>
-                </label>
-            </div>
-            
-            <div id="room-pass-container" style="display:none; margin-top:10px;">
-                 <input type="text" id="new-room-pass" placeholder="Пароль для входа" class="modal-inp" autocomplete="off">
-            </div>
-
-            <div class="modal-actions">
-                <button id="btn-cancel-create" class="btn-text">Отмена</button>
-                <button id="btn-confirm-create" class="btn-primary">Создать</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. Пароль -->
-    <div id="password-modal" class="modal-overlay">
-        <div class="modal-simple">
-            <h3>🔒 Доступ закрыт</h3>
-            <p style="font-size:13px; color:#888; margin-top:-15px; margin-bottom: 20px;">Введите пароль, чтобы войти в комнату</p>
-            <input type="password" id="join-room-pass" placeholder="Пароль..." class="modal-inp">
-            <div class="modal-actions">
-                <button id="btn-cancel-pass" class="btn-text">Отмена</button>
-                <button id="btn-confirm-pass" class="btn-primary">Войти</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 6. Редактировать чат -->
-    <div id="edit-room-modal" class="modal-overlay">
-        <div class="modal-simple">
-            <h3>Настройки группы</h3>
-            <input type="text" id="edit-room-name" placeholder="Новое название" class="modal-inp" autocomplete="off">
-            <input type="text" id="edit-room-avatar" placeholder="Новый URL аватара" class="modal-inp" autocomplete="off">
-            <div class="modal-actions">
-                <button id="btn-cancel-edit" class="btn-text">Отмена</button>
-                <button id="btn-confirm-edit" class="btn-primary">Сохранить</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 7. Настройки профиля -->
+    <div id="create-cat-modal" class="modal-overlay"><div class="modal-simple"><h3>Новая категория</h3><input type="text" id="new-cat-name" placeholder="Название" class="modal-inp"><div class="modal-actions"><button id="btn-cancel-cat" class="btn-text">Отмена</button><button id="btn-confirm-cat" class="btn-primary">Создать</button></div></div></div>
+    <div id="create-room-modal" class="modal-overlay"><div class="modal-simple"><h3>Создать группу</h3><input type="text" id="new-room-name" placeholder="Название" class="modal-inp"><label class="lbl" style="text-align:left;display:block;">Категория</label><select id="new-room-category-select" class="modal-inp"><option value="uncategorized">Без категории</option></select><input type="text" id="new-room-avatar" placeholder="Avatar URL" class="modal-inp"><div class="room-type-selector"><label class="radio-label"><input type="radio" name="roomType" value="public" checked><span>🌐 Публичная</span></label><label class="radio-label"><input type="radio" name="roomType" value="private"><span>🔒 Приватная</span></label></div><div id="room-pass-container" style="display:none; margin-top:10px;"><input type="text" id="new-room-pass" placeholder="Пароль" class="modal-inp"></div><div class="modal-actions"><button id="btn-cancel-create" class="btn-text">Отмена</button><button id="btn-confirm-create" class="btn-primary">Создать</button></div></div></div>
+    <div id="password-modal" class="modal-overlay"><div class="modal-simple"><h3>🔒 Доступ закрыт</h3><input type="password" id="join-room-pass" placeholder="Пароль..." class="modal-inp"><div class="modal-actions"><button id="btn-cancel-pass" class="btn-text">Отмена</button><button id="btn-confirm-pass" class="btn-primary">Войти</button></div></div></div>
+    <div id="edit-room-modal" class="modal-overlay"><div class="modal-simple"><h3>Настройки группы</h3><input type="text" id="edit-room-name" placeholder="Название" class="modal-inp"><input type="text" id="edit-room-avatar" placeholder="Avatar URL" class="modal-inp"><div class="modal-actions"><button id="btn-cancel-edit" class="btn-text">Отмена</button><button id="btn-confirm-edit" class="btn-primary">Сохранить</button></div></div></div>
+    <div id="move-room-modal" class="modal-overlay"><div class="modal-simple"><h3>Сменить категорию</h3><select id="move-room-select" class="modal-inp"></select><div class="modal-actions"><button id="btn-cancel-move" class="btn-text">Отмена</button><button id="btn-confirm-move" class="btn-primary">Переместить</button></div></div></div>
+    <div id="rename-cat-modal" class="modal-overlay"><div class="modal-simple"><h3>Переименовать</h3><input type="text" id="rename-cat-input" class="modal-inp"><div class="modal-actions"><button id="btn-cancel-rename-cat" class="btn-text">Отмена</button><button id="btn-confirm-rename-cat" class="btn-primary">Сохранить</button></div></div></div>
+    
     <div id="settings-modal" class="modal-overlay">
         <div class="settings-window">
             <div class="modal-glow"></div>
@@ -442,7 +333,7 @@
         </div>
     </div>
 
-    <!-- МОДАЛКА ПЕРЕСЫЛКИ (НОВОЕ) -->
+    <!-- МОДАЛКА ПЕРЕСЫЛКИ -->
     <div id="forward-modal" class="modal-overlay">
         <div class="modal-simple">
             <h3>Переслать сообщение</h3>
