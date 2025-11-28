@@ -237,10 +237,20 @@ body, html {
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(5, 5, 12, 0.85); backdrop-filter: blur(10px);
-    z-index: 2000; display: flex; justify-content: center; align-items: center;
-    opacity: 0; pointer-events: none; transition: 0.3s;
+    z-index: 2000; 
+    display: flex; justify-content: center; align-items: center;
+    /* ИСПРАВЛЕНИЕ: Добавляем visibility, чтобы невидимые окна не перекрывали клики */
+    opacity: 0; 
+    visibility: hidden; 
+    pointer-events: none; 
+    transition: 0.3s;
 }
-.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal-overlay.open { 
+    opacity: 1; 
+    visibility: visible; 
+    pointer-events: all; 
+}
 
 /* SIMPLE MODAL (Create/Password) */
 .modal-simple {
