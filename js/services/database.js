@@ -1,6 +1,6 @@
 import { db } from "../config.js";
 import { 
-    collection, addDoc, query, where, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayRemove, getDocs, writeBatch
+    collection, addDoc, query, where, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, arrayRemove, getDocs, writeBatch, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 export const ChatService = {
@@ -24,20 +24,25 @@ export const ChatService = {
         await updateDoc(ref, data);
     },
 
-    // НОВОЕ: Получить массив пользователей по ID (для списка участников)
+    // Получить массив конкретных пользователей (для групп)
     getUsersByIds: async (userIds) => {
         if (!userIds || userIds.length === 0) return [];
         
-        // Для простоты делаем параллельные getDoc.
-        // Если пользователей очень много, этот метод нужно оптимизировать.
+        // В продакшене лучше разбивать на чанки по 10 для запроса 'in', 
+        // но для MVP используем Promise.all с getDoc
         const promises = userIds.map(uid => getDoc(doc(db, "users", uid)));
         const snapshots = await Promise.all(promises);
         
         return snapshots.map(snap => {
             if (snap.exists()) return { uid: snap.id, ...snap.data() };
-            // Заглушка, если юзер не найден
             return { uid: snap.id, nickname: "Неизвестный", avatar: "", status: "offline", frame: "frame-none" };
         });
+    },
+
+    // НОВОЕ: Получить ВСЕХ пользователей (для Общего холла)
+    getAllUsers: async () => {
+        const snapshot = await getDocs(collection(db, "users"));
+        return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
     },
 
     // --- КАТЕГОРИИ ---
@@ -53,18 +58,14 @@ export const ChatService = {
     },
 
     deleteCategory: async (catId) => {
-        // 1. Находим все чаты в этой категории
         const q = query(collection(db, "rooms"), where("categoryId", "==", catId));
         const snapshot = await getDocs(q);
-        
         const batch = writeBatch(db);
 
-        // 2. Переносим чаты в root
         snapshot.forEach(doc => {
             batch.update(doc.ref, { categoryId: "root" });
         });
 
-        // 3. Удаляем саму категорию
         const catRef = doc(db, "categories", catId);
         batch.delete(catRef);
 
@@ -105,6 +106,14 @@ export const ChatService = {
         });
     },
 
+    // НОВОЕ: Вступить в комнату (добавить себя в members)
+    joinRoom: async (roomId, userId) => {
+        const ref = doc(db, "rooms", roomId);
+        await updateDoc(ref, {
+            members: arrayUnion(userId)
+        });
+    },
+
     subscribeToRooms: (callback) => {
         const q = query(collection(db, "rooms"), orderBy("createdAt", "asc"));
         return onSnapshot(q, (snapshot) => {
@@ -132,13 +141,11 @@ export const ChatService = {
         }
     },
 
-    // НОВОЕ: Обновить сообщение (для редактирования или закрепления)
     updateMessage: async (msgId, data) => {
         const ref = doc(db, "messages", msgId);
         await updateDoc(ref, data);
     },
 
-    // НОВОЕ: Удалить сообщение
     deleteMessage: async (msgId) => {
         const ref = doc(db, "messages", msgId);
         await deleteDoc(ref);
