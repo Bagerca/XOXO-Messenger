@@ -23,37 +23,61 @@ export class RightSidebar {
     }
 
     init() {
-        this.btnToggle.addEventListener('click', () => {
-            this.el.classList.toggle('closed');
-        });
-        this.btnToggleMedia.addEventListener('click', () => {
-            this.mediaGrid.classList.toggle('collapsed');
-        });
+        this.btnToggle.addEventListener('click', () => { this.el.classList.toggle('closed'); });
+        this.btnToggleMedia.addEventListener('click', () => { this.mediaGrid.classList.toggle('collapsed'); });
     }
 
     async loadRoom(room) {
         this.currentRoom = room;
         
-        this.roomName.innerText = room.name;
+        // Значения по умолчанию
+        let displayName = room.name;
+        let displayAvatar = room.avatar;
+        let typeText = room.type === 'private' ? 'Закрытая группа' : 'Публичная группа';
+
+        // --- ЛОГИКА ДЛЯ DM ---
+        if (room.type === 'dm') {
+            typeText = 'Личная переписка';
+            const otherId = room.members.find(uid => uid !== this.currentUser.uid);
+            
+            if (otherId) {
+                // Пытаемся получить данные
+                const otherUser = await ChatService.getUser(otherId);
+                if (otherUser) {
+                    displayName = otherUser.nickname;
+                    displayAvatar = otherUser.avatar;
+                }
+            } else {
+                displayName = "Сохраненное";
+            }
+        }
         
-        if (room.id === 'general') this.roomType.innerText = 'Все пользователи';
-        else if (room.isDM) this.roomType.innerText = 'Личная переписка';
-        else this.roomType.innerText = room.type === 'private' ? 'Закрытая группа' : 'Публичная группа';
+        if (room.id === 'general') {
+             typeText = 'Все пользователи';
+             displayName = "Общий холл";
+        }
+
+        // Рендер
+        this.roomName.innerText = displayName;
+        this.roomType.innerText = typeText;
         
-        if (room.avatar && room.avatar.startsWith('http')) {
-            this.roomAvatar.style.backgroundImage = `url('${room.avatar}')`;
+        if (displayAvatar && displayAvatar.startsWith('http')) {
+            this.roomAvatar.style.backgroundImage = `url('${displayAvatar}')`;
             this.roomAvatar.innerText = "";
         } else {
             this.roomAvatar.style.backgroundImage = "none";
             this.roomAvatar.innerText = "#";
         }
 
+        // Участники
+        // Если DM или General - логика немного отличается
         if (room.id === 'general' || !room.members) {
             this.loadAllUsers();
         } else {
             this.loadMembers(room.members);
         }
 
+        // Медиа
         if (this.unsubMedia) this.unsubMedia();
         this.unsubMedia = ChatService.subscribeToMessages(room.id, (msgs) => {
             this.renderMedia(msgs);
@@ -102,7 +126,7 @@ export class RightSidebar {
                 <div class="shader-icon" title="Shader: ${user.effect}">${effectIcon}</div>
             `;
             
-            // НОВОЕ: Открытие лички
+            // Клик по карточке открывает личку (DM)
             card.style.cursor = "pointer";
             card.addEventListener('click', async () => {
                 if (user.uid === this.currentUser.uid) return;
@@ -110,6 +134,10 @@ export class RightSidebar {
                 card.style.opacity = "0.5";
                 try {
                     const dmRoom = await ChatService.getOrCreateDirectChat(this.currentUser.uid, user.uid);
+                    // Передаем виртуальные данные, чтобы UI сразу обновился
+                    dmRoom.virtualName = user.nickname;
+                    dmRoom.virtualAvatar = user.avatar;
+                    
                     document.dispatchEvent(new CustomEvent('room-selected', { detail: dmRoom }));
                     if (window.innerWidth < 1000) this.el.classList.add('closed');
                 } catch (e) {
