@@ -1,6 +1,6 @@
 import { db } from "../config.js";
 import { 
-    collection, addDoc, query, where, orderBy, onSnapshot, doc, getDoc, setDoc 
+    collection, addDoc, query, where, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 export const ChatService = {
@@ -13,13 +13,19 @@ export const ChatService = {
         
         const defaultProfile = {
             nickname: email.split('@')[0],
-            avatar: "avatars/Ari LoL.png", // Убедись, что картинка есть в папке
-            effect: "liquid",
+            avatar: "avatars/Ari LoL.png",
+            intensity: 0.3,
             status: "online",
             bio: "В сети"
         };
         await setDoc(ref, defaultProfile);
         return defaultProfile;
+    },
+
+    // НОВАЯ ФУНКЦИЯ: Обновление профиля
+    updateUserProfile: async (uid, data) => {
+        const ref = doc(db, "users", uid);
+        await updateDoc(ref, data);
     },
 
     // Слушать сообщения (Realtime)
